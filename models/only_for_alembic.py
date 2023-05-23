@@ -21,3 +21,8 @@ from models.orders import Orders
 from models.incomes import Incomes
 from models.expenses import Expenses
 from models.kassas import Kassas
+from models.trades import Trades
+from models.trade_mechanisms import Trade_mechanisms
+from models.standart_mechanisms import Standart_mechanisms
+from models.loans import Loans
+from models.uploaded_files import Uploaded_files
