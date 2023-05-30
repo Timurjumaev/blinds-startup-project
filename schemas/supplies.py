@@ -3,6 +3,8 @@ from pydantic import BaseModel
 
 class CreateSupply(BaseModel):
     material_id: int
+    width: float
+    height: float
     mechanism_id: int
     quantity: float
     price: float
@@ -13,6 +15,8 @@ class CreateSupply(BaseModel):
 class UpdateSupply(BaseModel):
     id: int
     material_id: int
+    width: float
+    height: float
     mechanism_id: int
     quantity: float
     price: float

@@ -3,15 +3,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import pymysql
 
-engine=create_engine('mysql+pymysql://root@localhost:3306/jalyuzi-api')
-SessionLocal=sessionmaker(bind=engine)
+engine = create_engine('mysql+pymysql://root@localhost:3306/jalyuzi-api')
+SessionLocal = sessionmaker(bind=engine)
 
 
-Base=declarative_base()
+Base = declarative_base()
 
 
 def database():
-    db=SessionLocal()
+    db = SessionLocal()
     try:
         yield db
     finally:

@@ -14,6 +14,8 @@ class Supplies(Base):
     __tablename__ = "supplies"
     id = Column(Integer, autoincrement=True, primary_key=True)
     material_id = Column(Integer)
+    width = Column(Numeric)
+    height = Column(Numeric)
     mechanism_id = Column(Integer)
     quantity = Column(Numeric)
     price = Column(Numeric)
