@@ -5,7 +5,7 @@ class CreateTrade(BaseModel):
     material_id: int
     width: float
     height: float
-    status: str
+    stage_id: int
     comment: str
     order_id: int
 

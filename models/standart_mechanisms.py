@@ -1,8 +1,6 @@
 from sqlalchemy.orm import relationship
-
 from db import Base
 from sqlalchemy import *
-
 from models.mechanisms import Mechanisms
 from models.users import Users
 
@@ -15,8 +13,8 @@ class Standart_mechanisms(Base):
     quantity = Column(Integer)
     user_id = Column(Integer)
 
-    trade = relationship("Trades", foreign_keys=[user_id],
-                         primaryjoin=lambda: and_(Users.id == Standart_mechanisms.user_id))
-
     mechanism = relationship("Mechanisms", foreign_keys=[mechanism_id],
-                             primaryjoin=lambda: and_(Mechanisms.id == Standart_mechanisms.mechanism_id))
+                         primaryjoin=lambda: and_(Mechanisms.id == Standart_mechanisms.mechanism_id))
+
+    user = relationship("Users", foreign_keys=[user_id],
+                             primaryjoin=lambda: and_(Users.id == Standart_mechanisms.user_id))

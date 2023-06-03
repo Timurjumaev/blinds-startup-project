@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import pymysql
 
-engine = create_engine('mysql+pymysql://root@localhost:3306/jalyuzi-api')
+engine = create_engine('mysql+pymysql://root@localhost:3306/avtomobil_ijarasi')
 SessionLocal = sessionmaker(bind=engine)
 
 
