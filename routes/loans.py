@@ -1,54 +1,56 @@
-import inspect
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from functions.expenses import all_expenses, create_expense_e, update_expense_e, delete_expense_e
-from models.expenses import Expenses
+from functions.loans import create_loan_n, update_loan_n, all_loans, delete_loan_n
+from models.loans import Loans
 from utils.login import get_current_active_user
 from utils.db_operations import get_in_db
-from schemas.expenses import CreateExpense, UpdateExpense
 from schemas.users import CreateUser
+from schemas.loans import CreateLoan, UpdateLoan
 from db import database
+
+import inspect
 from utils.role_verification import role_verification
 
-expenses_router = APIRouter(
-    prefix="/expenses",
-    tags=["Expenses operation"]
+
+
+loans_router = APIRouter(
+    prefix="/loans",
+    tags=["Loans operation"]
 )
 
 
-@expenses_router.get("/get_expenses")
-def get_expenses(search: str = None, id: int = 0, page: int = 0, limit: int = 25, kassa_id: int = None,
-                 db: Session = Depends(database),
-                 current_user: CreateUser = Depends(get_current_active_user)):
+@loans_router.get("/get_loans")
+def get_loans(search: str = None, id: int = 0, page: int = 0, limit: int = 25, db: Session = Depends(database),
+              current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return get_in_db(db, Expenses, id)
-    return all_expenses(search, page, limit, kassa_id, db)
+        return get_in_db(db, Loans, id)
+    return all_loans(search, page, limit, db)
 
 
-@expenses_router.post("/create_expense")
-def create_expense(new_expense: CreateExpense, db: Session = Depends(database),
+@loans_router.post("/create_loan")
+def create_loan(new_loan: CreateLoan, db: Session = Depends(database),
                 current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    create_expense_e(new_expense, db, current_user)
+    create_loan_n(new_loan, db)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 
-@expenses_router.put("/update_expense")
-def update_expense(this_expense: UpdateExpense, db: Session = Depends(database),
+@loans_router.put("/update_loan")
+def update_loan(this_loan: UpdateLoan, db: Session = Depends(database),
                 current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    update_expense_e(this_expense, db, current_user)
+    update_loan_n(this_loan, db)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 
-@expenses_router.delete("/delete_expense")
-def delete_expense(id: int, db: Session = Depends(database),
+@loans_router.delete("/delete_loan")
+def delete_loan(id: int, db: Session = Depends(database),
                 current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    delete_expense_e(id, db)
+    delete_loan_n(id, db)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

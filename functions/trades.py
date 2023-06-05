@@ -13,10 +13,15 @@ from models.trades import Trades
 
 
 def all_trades(search, page, limit, db):
-    trades = db.query(Trades).options(joinedload(Trades.user), joinedload(Trades.material))
+    trades = db.query(Trades).options(joinedload(Trades.user),
+                                      joinedload(Trades.material),
+                                      (joinedload(Trades.stage)))
     if search:
         search_formatted = "%{}%".format(search)
-        trades = trades.filter(Users.name.like(search_formatted) | Users.username.like(search_formatted) | Materials.name.like(search_formatted))
+        trades = trades.filter((Users.name.like(search_formatted)) |
+                               (Users.username.like(search_formatted)) |
+                               (Materials.name.like(search_formatted)) |
+                               (Stages.name.like(search_formatted)))
     trades = trades.order_by(Trades.id.asc())
     return pagination(trades, page, limit)
 

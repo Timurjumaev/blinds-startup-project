@@ -15,6 +15,5 @@ class Stages(Base):
     category_id = Column(Integer)
     number = Column(Integer)
 
-
     category = relationship('Categories', foreign_keys=[category_id],
-    primaryjoin=lambda: and_(Categories.id == Stages.category_id))
+                            primaryjoin=lambda: and_(Categories.id == Stages.category_id))

@@ -11,6 +11,7 @@ from routes.discounts import discounts_router
 from routes.expenses import expenses_router
 from routes.incomes import incomes_router
 from routes.kassas import kassas_router
+from routes.loans import loans_router
 from routes.materials import materials_router
 from routes.mechanisms import mechanisms_router
 from routes.orders import orders_router
@@ -22,7 +23,7 @@ from routes.standart_mechanisms import standart_mechanisms_router
 from routes.supplier_balances import supplier_balances_router
 from routes.suppliers import suppliers_router
 from routes.supplies import supplies_router
-# from routes.trade_mechanisms import trade_mechanisms_router
+from routes.trade_mechanisms import trade_mechanisms_router
 from routes.users import users_router
 from routes.warehouse_materials import warehouse_materials_router
 from routes.warehouses import warehouses_router
@@ -56,7 +57,8 @@ app.include_router(incomes_router)
 app.include_router(expenses_router)
 app.include_router(trades_router)
 app.include_router(standart_mechanisms_router)
-# app.include_router(trade_mechanisms_router)
+app.include_router(trade_mechanisms_router)
+app.include_router(loans_router)
 
 
 app.add_middleware(

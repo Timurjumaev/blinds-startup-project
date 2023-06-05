@@ -6,6 +6,8 @@ class CreateMechanism(BaseModel):
     comment: str
     collaction_id: int
     olchov: str
+    file: str
+
 
 
 class UpdateMechanism(BaseModel):
@@ -14,4 +16,6 @@ class UpdateMechanism(BaseModel):
     comment: str
     collaction_id: int
     olchov: str
+    file: str
+
 

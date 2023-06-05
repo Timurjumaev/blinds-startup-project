@@ -18,14 +18,14 @@ stage_users_router = APIRouter(
 
 
 @stage_users_router.get("/get_stage_users")
-def get_stage_users(search: str = None, id: int = 0, page: int = 0, limit: int = 25, db: Session = Depends(database),
+def get_stage_users(search: str = None, id: int = 0, page: int = 0, limit: int = 25, stage_id: int = None, db: Session = Depends(database),
               current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
         return get_in_db(db, Stage_users, id)
-    return all_stage_users(search, page, limit, db)
+    return all_stage_users(search, page, limit, stage_id, db)
 
 
 @stage_users_router.post("/create_stage_user")

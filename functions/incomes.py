@@ -1,22 +1,36 @@
 from datetime import datetime, timedelta
 
 from fastapi import HTTPException
+from sqlalchemy.orm import joinedload
 
 from models.currencies import Currencies
 from models.customers import Customers
 from models.kassas import Kassas
+from models.users import Users
 from utils.db_operations import save_in_db, get_in_db
 from utils.pagination import pagination
 from models.incomes import Incomes
 
 
-def all_incomes(search, page, limit, db):
-    if search:
-        search_formatted = "%{}%".format(search)
-        search_filter = (Incomes.money.like(search_formatted))
+def all_incomes(search, page, limit, kassa_id, db):
+    incomes = db.query(Incomes).options(joinedload(Incomes.kassa),
+                                        joinedload(Incomes.user),
+                                        joinedload(Incomes.currency),
+                                        joinedload(Incomes.source_customer))
+    search_format = "%{}%".format(search)
+    search_filter = (Users.name.like(search_format)) | \
+                    (Users.username.like(search_format)) | \
+                    (Currencies.currency.like(search_format)) | \
+                    (Kassas.name.like(search_format)) | \
+                    (Customers.name.like(search_format))
+    if search and kassa_id:
+        incomes = incomes.filter(search_filter, Incomes.kassa_id == kassa_id).order_by(Incomes.id.asc())
+    elif search is None and kassa_id:
+        incomes = incomes.filter(Incomes.kassa_id == kassa_id).order_by(Incomes.id.asc())
+    elif kassa_id is None and search:
+        incomes = incomes.filter(search_filter).order_by(Incomes.id.asc())
     else:
-        search_filter = Incomes.id > 0
-    incomes = db.query(Incomes).filter(search_filter).order_by(Incomes.money.asc())
+        incomes = incomes.order_by(Incomes.id.asc())
     return pagination(incomes, page, limit)
 
 

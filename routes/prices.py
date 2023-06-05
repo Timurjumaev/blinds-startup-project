@@ -18,14 +18,14 @@ prices_router = APIRouter(
 
 
 @prices_router.get("/get_prices")
-def get_prices(id: int = 0, page: int = 0, limit: int = 25, db: Session = Depends(database),
+def get_prices(id: int = 0, page: int = 0, limit: int = 25, collaction_id: int = None, db: Session = Depends(database),
               current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
         return get_in_db(db, Prices, id)
-    return all_prices(page, limit, db)
+    return all_prices(page, limit, collaction_id, db)
 
 
 @prices_router.post("/create_price")

@@ -1,3 +1,5 @@
+from sqlalchemy.orm import joinedload
+
 from models.categories import Categories
 from utils.db_operations import save_in_db, get_in_db
 from utils.pagination import pagination
@@ -5,12 +7,13 @@ from models.stages import Stages
 
 
 def all_stages(search, page, limit, db):
+    stages = db.query(Stages).options(joinedload(Stages.category))
+    search_formatted = "%{}%".format(search)
+    search_filter = (Stages.name.like(search_formatted)) | (Categories.name.like(search_formatted))
     if search:
-        search_formatted = "%{}%".format(search)
-        search_filter = (Stages.name.like(search_formatted))
+        stages = stages.filter(search_filter).order_by(Stages.id.asc())
     else:
-        search_filter = Stages.id > 0
-    stages = db.query(Stages).filter(search_filter).order_by(Stages.name.asc())
+        stages = stages.order_by(Stages.id.asc())
     return pagination(stages, page, limit)
 
 

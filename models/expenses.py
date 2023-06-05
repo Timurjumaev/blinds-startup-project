@@ -1,10 +1,9 @@
 from sqlalchemy.orm import relationship
-
 from db import Base
 from sqlalchemy import *
-
 from models.currencies import Currencies
 from models.kassas import Kassas
+from models.suppliers import Suppliers
 from models.users import Users
 
 
@@ -27,6 +26,14 @@ class Expenses(Base):
                         primaryjoin=lambda: and_(Users.id == Expenses.user_id))
 
     kassa = relationship('Kassas', foreign_keys=[kassa_id],
-                            primaryjoin=lambda: and_(Kassas.id == Expenses.kassa_id))
+                         primaryjoin=lambda: and_(Kassas.id == Expenses.kassa_id))
+
+    source_user = relationship('Users', foreign_keys=[source_id],
+                               primaryjoin=lambda: and_(Users.id == Expenses.source_id,
+                                                        Expenses.source == "user"))
+
+    source_supplier = relationship('Suppliers', foreign_keys=[source_id],
+                                   primaryjoin=lambda: and_(Suppliers.id == Expenses.source_id,
+                                                            Expenses.source == "supplier"))
 
 

@@ -18,14 +18,14 @@ standart_mechanisms_router = APIRouter(
 
 
 @standart_mechanisms_router.get("/get_standart_mechanisms")
-def get_standart_mechanisms(search: str = None, id: int = 0, page: int = 0, limit: int = 25, db: Session = Depends(database),
-              current_user: CreateUser = Depends(get_current_active_user)):
+def get_standart_mechanisms(search: str = None, id: int = 0, page: int = 0, limit: int = 25, mechanism_id: int = None, db: Session = Depends(database),
+                            current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
         return get_in_db(db, Standart_mechanisms, id)
-    return all_standart_mechanisms(search, page, limit, db)
+    return all_standart_mechanisms(search, page, limit, mechanism_id, db)
 
 
 @standart_mechanisms_router.post("/create_standart_mechanism")

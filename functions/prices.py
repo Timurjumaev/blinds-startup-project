@@ -8,8 +8,12 @@ from utils.pagination import pagination
 from models.prices import Prices
 
 
-def all_prices(page, limit, db):
-    prices = db.query(Prices).join(Prices.currency).options(joinedload(Prices.currency)).order_by(Prices.price.asc())
+def all_prices(page, limit, collaction_id, db):
+    if collaction_id:
+        prices = db.query(Prices).filter(Prices.collaction_id == collaction_id)
+    else:
+        prices = db.query(Prices)
+    prices = prices.options(joinedload(Prices.currency)).order_by(Prices.price.asc())
     return pagination(prices, page, limit)
 
 

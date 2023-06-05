@@ -7,16 +7,28 @@ from utils.pagination import pagination
 from models.stages import Stages
 
 
-def all_stage_users(search, page, limit, db):
-    stage_users = db.query(Stage_users).join(Stage_users.stage).join(Stage_users.user).options(joinedload(Stage_users.stage), joinedload(Stage_users.user))
-    if search:
+def all_stage_users(search, page, limit, stage_id, db):
+    stage_users = db.query(Stage_users).options(joinedload(Stage_users.stage), joinedload(Stage_users.user))
+    if search and stage_id:
         search_formatted = "%{}%".format(search)
         stage_users = stage_users.filter(Stage_users.kpi.like(search_formatted) |
                                          Stages.name.like(search_formatted) |
                                          Stages.number.like(search_formatted) |
                                          Users.name.like(search_formatted) |
                                          Users.username.like(search_formatted))
-    stage_users = stage_users.order_by(Stage_users.kpi.asc())
+        stage_users = stage_users.filter(Stage_users.stage_id == stage_id).order_by(Stage_users.id.asc())
+    elif search is None and stage_id:
+        stage_users = stage_users.filter(Stage_users.stage_id == stage_id).order_by(Stage_users.id.asc())
+    elif stage_id is None and search:
+        search_formatted = "%{}%".format(search)
+        stage_users = stage_users.filter(Stage_users.kpi.like(search_formatted) |
+                                         Stages.name.like(search_formatted) |
+                                         Stages.number.like(search_formatted) |
+                                         Users.name.like(search_formatted) |
+                                         Users.username.like(search_formatted))
+        stage_users = stage_users.order_by(Stage_users.id.asc())
+    else:
+        stage_users = stage_users.order_by(Stage_users.id.asc())
     return pagination(stage_users, page, limit)
 
 

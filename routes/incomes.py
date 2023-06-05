@@ -18,19 +18,19 @@ incomes_router = APIRouter(
 
 
 @incomes_router.get("/get_incomes")
-def get_incomes(search: str = None, id: int = 0, page: int = 0, limit: int = 25, db: Session = Depends(database),
-              current_user: CreateUser = Depends(get_current_active_user)):
+def get_incomes(search: str = None, id: int = 0, page: int = 0, limit: int = 25, kassa_id: int = None,
+                db: Session = Depends(database), current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
         return get_in_db(db, Incomes, id)
-    return all_incomes(search, page, limit, db)
+    return all_incomes(search, page, limit, kassa_id, db)
 
 
 @incomes_router.post("/create_income")
 def create_income(new_income: CreateIncome, db: Session = Depends(database),
-                current_user: CreateUser = Depends(get_current_active_user)):
+                  current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     create_income_e(new_income, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")

@@ -7,16 +7,27 @@ from models.standart_mechanisms import Standart_mechanisms
 from fastapi import HTTPException
 
 
-
-def all_standart_mechanisms(search, page, limit, db):
+def all_standart_mechanisms(search, page, limit, mechanism_id, db):
     standart_mechanism = db.query(Standart_mechanisms).options(joinedload(Standart_mechanisms.mechanism),
                                                                joinedload(Standart_mechanisms.user))
-    if search:
+    if search and mechanism_id:
         search_formatted = "%{}%".format(search)
         standart_mechanism = standart_mechanism.filter(Users.name.like(search_formatted) |
                                                        Users.username.like(search_formatted) |
                                                        Mechanisms.name.like(search_formatted))
-    standart_mechanism = standart_mechanism.order_by(Standart_mechanisms.id.asc())
+        standart_mechanism = standart_mechanism.filter(Standart_mechanisms.mechanism_id == mechanism_id)\
+            .order_by(Standart_mechanisms.id.asc())
+    elif search is None and mechanism_id:
+        standart_mechanism = standart_mechanism.filter(Standart_mechanisms.mechanism_id == mechanism_id)\
+            .order_by(Standart_mechanisms.id.asc())
+    elif mechanism_id is None and search:
+        search_formatted = "%{}%".format(search)
+        standart_mechanism = standart_mechanism.filter(Users.name.like(search_formatted) |
+                                                       Users.username.like(search_formatted) |
+                                                       Mechanisms.name.like(search_formatted))
+        standart_mechanism = standart_mechanism.order_by(Standart_mechanisms.id.asc())
+    else:
+        standart_mechanism = standart_mechanism.order_by(Standart_mechanisms.id.asc())
     return pagination(standart_mechanism, page, limit)
 
 

@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
 
 from functions.phones import create_phone, update_phone
 from models.phones import Phones
+from models.uploaded_files import Uploaded_files
 from utils.db_operations import save_in_db, get_in_db
 from utils.pagination import pagination
 from models.users import Users
@@ -43,10 +46,14 @@ def create_user_r(form, db, thisuser):
         comment = i.comment
         number = i.number
         create_phone(comment, number, new_user_db.id, thisuser.id, db, 'user')
-
-
-
-
+    if form.file:
+        new_file_db = Uploaded_files(
+            file=form.file,
+            source="user",
+            source_id=new_user_db.id,
+            time=datetime.now()
+        )
+        save_in_db(db, new_file_db)
 
 
 def update_user_r(form, db, thisuser):
@@ -72,6 +79,18 @@ def update_user_r(form, db, thisuser):
         comment = i.comment
         number = i.number
         update_phone(phone_id, comment, number, form.id, thisuser.id, db, 'user')
+
+    if form.file:
+        db.query(Uploaded_files).filter(Uploaded_files.source == "user",
+                                        Uploaded_files.source_id == form.id).delete()
+        db.commit()
+        new_file_db = Uploaded_files(
+            file=form.file,
+            source="user",
+            source_id=form.id,
+            time=datetime.now()
+        )
+        save_in_db(db, new_file_db)
 
 
 

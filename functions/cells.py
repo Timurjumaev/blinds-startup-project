@@ -6,12 +6,20 @@ from utils.pagination import pagination
 from models.cells import Cells
 
 
-def all_cells(search, page, limit, db):
+def all_cells(search, page, limit, warehouse_id, db):
     cells = db.query(Cells).join(Cells.warehouse).options(joinedload(Cells.warehouse))
-    if search:
+    if search and warehouse_id:
         search_formatted = "%{}%".format(search)
         cells = cells.filter(Cells.name1.like(search_formatted) | Cells.name2.like(search_formatted) | Warehouses.name.like(search_formatted))
-    cells = cells.order_by(Cells.name1.asc())
+        cells = cells.filter(Cells.warehouse_id == warehouse_id).order_by(Cells.id.asc())
+    elif search is None and warehouse_id:
+        cells = cells.filter(Cells.warehouse_id == warehouse_id).order_by(Cells.id.asc())
+    elif warehouse_id is None and search:
+        search_formatted = "%{}%".format(search)
+        cells = cells.filter(Cells.name1.like(search_formatted) | Cells.name2.like(search_formatted) | Warehouses.name.like(search_formatted))
+        cells = cells.order_by(Cells.id.asc())
+    else:
+        cells = cells.order_by(Cells.id.asc())
     return pagination(cells, page, limit)
 
 

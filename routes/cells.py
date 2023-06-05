@@ -18,14 +18,15 @@ cells_router = APIRouter(
 
 
 @cells_router.get("/get_cells")
-def get_cells(search: str = None, id: int = 0, page: int = 0, limit: int = 25, db: Session = Depends(database),
+def get_cells(search: str = None, id: int = 0, page: int = 0, limit: int = 25,
+              warehouse_id: int = None, db: Session = Depends(database),
               current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
         return get_in_db(db, Cells, id)
-    return all_cells(search, page, limit, db)
+    return all_cells(search, page, limit, warehouse_id, db)
 
 
 @cells_router.post("/create_stage")
