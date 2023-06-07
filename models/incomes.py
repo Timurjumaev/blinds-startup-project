@@ -4,8 +4,9 @@ from db import Base
 from sqlalchemy import *
 
 from models.currencies import Currencies
-from models.customers import Customers
 from models.kassas import Kassas
+from models.loans import Loans
+from models.orders import Orders
 from models.users import Users
 
 
@@ -28,10 +29,13 @@ class Incomes(Base):
                         primaryjoin=lambda: and_(Users.id == Incomes.user_id))
 
     kassa = relationship('Kassas', foreign_keys=[kassa_id],
-                            primaryjoin=lambda: and_(Kassas.id == Incomes.kassa_id))
+                         primaryjoin=lambda: and_(Kassas.id == Incomes.kassa_id))
 
-    source_customer = relationship('Customers', foreign_keys=[source_id],
-                                   primaryjoin=lambda: and_(Customers.id == Incomes.source_id,
-                                                            Incomes.source == "customer"))
+    source_order = relationship('Orders', foreign_keys=[source_id],
+                                primaryjoin=lambda: and_(Orders.id == Incomes.source_id,
+                                                         Incomes.source == "order"))
 
+    source_loan = relationship('Loans', foreign_keys=[source_id],
+                               primaryjoin=lambda: and_(Loans.id == Incomes.source_id,
+                                                        Incomes.source == "loan"))
 

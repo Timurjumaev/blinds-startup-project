@@ -7,12 +7,20 @@ from models.trade_mechanisms import Trade_mechanisms
 from fastapi import HTTPException
 
 
-def all_trade_mechanisms(search, page, limit, db):
+def all_trade_mechanisms(search, page, limit, trade_id, db):
     trade_mechanism = db.query(Trade_mechanisms).options(joinedload(Trade_mechanisms.mechanism))
-    if search:
-        search_formatted = "%{}%".format(search)
-        trade_mechanism = trade_mechanism.filter(Mechanisms.name.like(search_formatted))
-    trade_mechanism = trade_mechanism.order_by(Trade_mechanisms.id.asc())
+    search_formatted = "%{}%".format(search)
+    search_filter = Mechanisms.name.like(search_formatted)
+    if search and trade_id:
+        trade_mechanism = trade_mechanism.filter(search_filter, Trade_mechanisms.trade_id == trade_id)\
+            .order_by(Trade_mechanisms.id.asc())
+    elif search is None and trade_id:
+        trade_mechanism = trade_mechanism.filter(Trade_mechanisms.trade_id == trade_id)\
+            .order_by(Trade_mechanisms.id.asc())
+    elif trade_id is None and search:
+        trade_mechanism = trade_mechanism.filter(search_filter).order_by(Trade_mechanisms.id.asc())
+    else:
+        trade_mechanism = trade_mechanism.order_by(Trade_mechanisms.id.asc())
     return pagination(trade_mechanism, page, limit)
 
 

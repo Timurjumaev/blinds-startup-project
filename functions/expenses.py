@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
 from models.currencies import Currencies
-from models.customers import Customers
 from models.kassas import Kassas
 from models.suppliers import Suppliers
 from models.users import Users
@@ -67,7 +66,9 @@ def update_expense_e(form, db, thisuser):
     get_in_db(db, Currencies, form.currency_id), get_in_db(db, Kassas, form.kassa_id)
     if db.query(Kassas).filter(Kassas.currency_id == form.currency_id).first() is None:
         raise HTTPException(status_code=400, detail="Current currency_id != Kassas.currency_id")
-    if get_in_db(db, Customers, form.source_id) and form.source == "customer":
+    if (db.query(Suppliers).filter(Suppliers.id == form.source_id).first() and form.source == "supplier") or \
+            (db.query(Users).filter(Users.id == form.source_id).first() and form.source == "user") or \
+            (form.source_id == 0 and form.source == "others"):
         old_money = get_in_db(db, Expenses, form.id).money
         db.query(Expenses).filter(Expenses.id == form.id).update({
             Expenses.money: form.money,

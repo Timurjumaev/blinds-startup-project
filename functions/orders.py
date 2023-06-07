@@ -10,12 +10,19 @@ from utils.pagination import pagination
 from models.orders import Orders
 
 
-def all_orders(search, page, limit, db):
-    orders = db.query(Orders).join(Orders.customer).join(Orders.user).options(joinedload(Orders.customer), joinedload(Orders.user))
-    if search:
-        search_formatted = "%{}%".format(search)
-        orders = orders.filter(Users.name.like(search_formatted) | Users.username.like(search_formatted) | Customers.name.like(search_formatted))
-    orders = orders.order_by(Orders.status.asc())
+def all_orders(search, page, limit, customer_id, db):
+    orders = db.query(Orders).options(joinedload(Orders.customer),
+                                      joinedload(Orders.user))
+    search_formatted = "%{}%".format(search)
+    search_filter = Users.name.like(search_formatted) | Users.username.like(search_formatted) | Customers.name.like(search_formatted)
+    if search and customer_id:
+        orders = orders.filter(search_filter, Orders.customer_id == customer_id).order_by(Orders.id.asc())
+    elif search is None and customer_id:
+        orders = orders.filter(Orders.customer_id == customer_id).order_by(Orders.id.asc())
+    elif customer_id is None and search:
+        orders = orders.filter(search_filter).order_by(Orders.id.asc())
+    else:
+        orders = orders.order_by(Orders.id.asc())
     return pagination(orders, page, limit)
 
 

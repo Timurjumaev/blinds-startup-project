@@ -19,14 +19,14 @@ warehouse_materials_router = APIRouter(
 
 @warehouse_materials_router.get("/get_warehouse_materials")
 def get_warehouse_materials(search: str = None, id: int = 0, page: int = 0, limit: int = 25,
-                            material_id: int = None, mechanism_id: int = None, db: Session = Depends(database),
+                            inspection: str = None, db: Session = Depends(database),
                             current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
         return get_in_db(db, Warehouse_materials, id)
-    return all_warehouse_materials(search, page, limit, material_id, mechanism_id, db)
+    return all_warehouse_materials(search, page, limit, inspection, db)
 
 
 @warehouse_materials_router.put("/update_warehouse_materials")

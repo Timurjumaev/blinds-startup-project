@@ -6,12 +6,20 @@ from utils.db_operations import save_in_db, get_in_db
 from utils.pagination import pagination
 
 
-def all_loans(search, page, limit, db):
-    loans = db.query(Loans).options(joinedload(Loans.order),)
-    if search:
-        search_formatted = "%{}%".format(search)
-        loans = loans.filter(Orders.status.like(search_formatted))
-    loans = loans.order_by(Loans.id.asc())
+def all_loans(search, page, limit, order_id, db):
+    loans = db.query(Loans).options(joinedload(Loans.order))
+    search_formatted = "%{}%".format(search)
+    search_filter = Loans.money.like(search_formatted) | \
+                    Loans.residual.like(search_formatted) | \
+                    Loans.comment.like(search_formatted)
+    if search and order_id:
+        loans = loans.filter(search_filter, Loans.order_id == order_id).order_by(Loans.id.asc())
+    elif search is None and order_id:
+        loans = loans.filter(Loans.order_id == order_id).order_by(Loans.id.asc())
+    elif order_id is None and search:
+        loans = loans.filter(search_filter).order_by(Loans.id.asc())
+    else:
+        loans = loans.order_by(Loans.id.asc())
     return pagination(loans, page, limit)
 
 
