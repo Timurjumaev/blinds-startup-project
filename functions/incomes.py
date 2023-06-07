@@ -12,6 +12,13 @@ from models.incomes import Incomes
 
 
 def all_incomes(search, page, limit, kassa_id, db):
+    allowed_time = timedelta(minutes=5)
+    for expense in db.query(Incomes).all():
+        if expense.time + allowed_time < datetime.now():
+            db.query(Incomes).filter(Incomes.id == expense.id).update({
+                Incomes.updelstatus: False
+            })
+            db.commit()
     incomes = db.query(Incomes).options(joinedload(Incomes.kassa),
                                         joinedload(Incomes.user),
                                         joinedload(Incomes.currency),
@@ -48,6 +55,7 @@ def create_income_e(form, db, thisuser):
             user_id=thisuser.id,
             kassa_id=form.kassa_id,
             comment=form.comment,
+            updelstatus=True
         )
         save_in_db(db, new_income_db)
         db.query(Kassas).filter(Kassas.id == form.kassa_id).update({

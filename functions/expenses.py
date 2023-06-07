@@ -11,6 +11,13 @@ from models.expenses import Expenses
 
 
 def all_expenses(search, page, limit, kassa_id, db):
+    allowed_time = timedelta(minutes=5)
+    for expense in db.query(Expenses).all():
+        if expense.time + allowed_time < datetime.now():
+            db.query(Expenses).filter(Expenses.id == expense.id).update({
+                Expenses.updelstatus: False
+            })
+            db.commit()
     expenses = db.query(Expenses).options(joinedload(Expenses.kassa),
                                           joinedload(Expenses.user),
                                           joinedload(Expenses.currency),
@@ -49,6 +56,7 @@ def create_expense_e(form, db, thisuser):
             user_id=thisuser.id,
             kassa_id=form.kassa_id,
             comment=form.comment,
+            updelstatus=True
         )
         save_in_db(db, new_expense_db)
         db.query(Kassas).filter(Kassas.id == form.kassa_id).update({
@@ -75,6 +83,7 @@ def update_expense_e(form, db, thisuser):
             Expenses.currency_id: form.currency_id,
             Expenses.source: form.source,
             Expenses.source_id: form.source_id,
+            Expenses.user_id: thisuser.id,
             Expenses.kassa_id: form.kassa_id,
             Expenses.comment: form.comment
         })

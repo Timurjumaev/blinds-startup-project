@@ -15,7 +15,8 @@ from models.trades import Trades
 def all_trades(search, page, limit, db):
     trades = db.query(Trades).options(joinedload(Trades.user),
                                       joinedload(Trades.material),
-                                      (joinedload(Trades.stage)))
+                                      joinedload(Trades.stage),
+                                      joinedload(Trades.trade_mechanism))
     if search:
         search_formatted = "%{}%".format(search)
         trades = trades.filter((Users.name.like(search_formatted)) |

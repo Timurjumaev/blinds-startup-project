@@ -6,6 +6,7 @@ from sqlalchemy import *
 from models.materials import Materials
 from models.orders import Orders
 from models.stages import Stages
+from models.trade_mechanisms import Trade_mechanisms
 from models.users import Users
 
 
@@ -25,10 +26,13 @@ class Trades(Base):
                          primaryjoin=lambda: and_(Stages.id == Trades.stage_id))
 
     material = relationship('Materials', foreign_keys=[material_id],
-                        primaryjoin=lambda: and_(Materials.id == Trades.material_id))
+                            primaryjoin=lambda: and_(Materials.id == Trades.material_id))
 
     order = relationship('Orders', foreign_keys=[order_id],
                          primaryjoin=lambda: and_(Orders.id == Trades.order_id))
 
     user = relationship('Users', foreign_keys=[user_id],
-                         primaryjoin=lambda: and_(Users.id == Trades.user_id))
+                        primaryjoin=lambda: and_(Users.id == Trades.user_id))
+
+    trade_mechanism = relationship('Trade_mechanisms', foreign_keys=[id],
+                                   primaryjoin=lambda: and_(Trade_mechanisms.trade_id == Trades.id))
