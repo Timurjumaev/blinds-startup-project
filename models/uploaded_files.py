@@ -8,4 +8,3 @@ class Uploaded_files(Base):
     file = Column(Text)
     source = Column(String(999))
     source_id = Column(Integer)
-    time = Column(DateTime)

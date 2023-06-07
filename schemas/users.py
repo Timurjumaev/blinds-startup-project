@@ -11,7 +11,6 @@ class CreateUser(BaseModel):
     password: str
     role: str
     status: bool
-    file: str
     phones: List[CreatePhone]
 
 
@@ -22,5 +21,4 @@ class UpdateUser(BaseModel):
     password: str
     role: str
     status: bool
-    file: str
     phones: List[UpdatePhone]

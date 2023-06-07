@@ -1,11 +1,7 @@
-from datetime import datetime
-
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
-
 from functions.phones import create_phone, update_phone
 from models.phones import Phones
-from models.uploaded_files import Uploaded_files
 from utils.db_operations import save_in_db, get_in_db
 from utils.pagination import pagination
 from models.users import Users
@@ -13,7 +9,7 @@ from utils.login import get_password_hash
 
 
 def all_users(search, page, limit, status, db):
-    users = db.query(Users).join(Users.phones).options(joinedload(Users.phones))
+    users = db.query(Users).options(joinedload(Users.phones), joinedload(Users.files))
     if search:
         search_formatted = "%{}%".format(search)
         users = users.filter(Users.name.like(search_formatted))
@@ -46,20 +42,10 @@ def create_user_r(form, db, thisuser):
         comment = i.comment
         number = i.number
         create_phone(comment, number, new_user_db.id, thisuser.id, db, 'user')
-    if form.file:
-        new_file_db = Uploaded_files(
-            file=form.file,
-            source="user",
-            source_id=new_user_db.id,
-            time=datetime.now()
-        )
-        save_in_db(db, new_file_db)
 
 
 def update_user_r(form, db, thisuser):
-    if get_in_db(db, Users, form.id) is None or get_in_db(db, Phones, form.phones[0].id) is None:
-        raise HTTPException(status_code=400, detail="User or Phone not found!")
-
+    get_in_db(db, Users, form.id), get_in_db(db, Phones, form.phones[0].id)
     if form.role != "admin" and form.role != "worker" and form.role != "warehouseman":
         raise HTTPException(status_code=400, detail="Role error!")
 
@@ -80,17 +66,6 @@ def update_user_r(form, db, thisuser):
         number = i.number
         update_phone(phone_id, comment, number, form.id, thisuser.id, db, 'user')
 
-    if form.file:
-        db.query(Uploaded_files).filter(Uploaded_files.source == "user",
-                                        Uploaded_files.source_id == form.id).delete()
-        db.commit()
-        new_file_db = Uploaded_files(
-            file=form.file,
-            source="user",
-            source_id=form.id,
-            time=datetime.now()
-        )
-        save_in_db(db, new_file_db)
 
 
 

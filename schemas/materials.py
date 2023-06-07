@@ -5,7 +5,6 @@ class CreateMaterial(BaseModel):
     name: str
     comment: str
     collaction_id: int
-    file: str
 
 
 
@@ -14,4 +13,3 @@ class UpdateMaterial(BaseModel):
     name: str
     comment: str
     collaction_id: int
-    file: str
