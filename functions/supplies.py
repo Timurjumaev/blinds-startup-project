@@ -14,27 +14,33 @@ from utils.pagination import pagination
 from sqlalchemy.orm import joinedload
 
 
-def all_supplies(search, page, limit, supplier_id, db):
+def all_supplies(search, page, limit, supplier_id, status, db):
     supplies = db.query(Supplies).options(joinedload(Supplies.material), joinedload(Supplies.supplier),
                                           joinedload(Supplies.mechanism), joinedload(Supplies.currency))
+    if status:
+        status_filter = Supplies.status == True
+    elif status is False:
+        status_filter = Supplies.status == False
+    else:
+        status_filter = Supplies.id > 0
     if search and supplier_id:
         search_formatted = "%{}%".format(search)
-        supplies = supplies.filter(Materials.name.like(search_formatted)) | \
-                                  (Suppliers.name.like(search_formatted)) | \
-                                  (Mechanisms.name.like(search_formatted)) | \
-                                  (Currencies.currency.like(search_formatted))
-        supplies = supplies.filter(Supplies.supplier_id == supplier_id).order_by(Supplies.id.asc())
+        supplies = supplies.filter(Materials.name.like(search_formatted) |
+                                   Suppliers.name.like(search_formatted) |
+                                   Mechanisms.name.like(search_formatted) |
+                                   Currencies.currency.like(search_formatted))
+        supplies = supplies.filter(Supplies.supplier_id == supplier_id, status_filter).order_by(Supplies.id.asc())
     elif search is None and supplier_id:
-        supplies = supplies.filter(Supplies.supplier_id == supplier_id).order_by(Supplies.id.asc())
+        supplies = supplies.filter(Supplies.supplier_id == supplier_id, status_filter).order_by(Supplies.id.asc())
     elif supplier_id is None and search:
         search_formatted = "%{}%".format(search)
-        supplies = supplies.filter(Materials.name.like(search_formatted)) | \
-                                  (Suppliers.name.like(search_formatted)) | \
-                                  (Mechanisms.name.like(search_formatted)) | \
-                                  (Currencies.currency.like(search_formatted))
-        supplies = supplies.order_by(Supplies.id.asc())
+        supplies = supplies.filter(Materials.name.like(search_formatted) |
+                                   Suppliers.name.like(search_formatted) |
+                                   Mechanisms.name.like(search_formatted) |
+                                   Currencies.currency.like(search_formatted))
+        supplies = supplies.filter(status_filter).order_by(Supplies.id.asc())
     else:
-        supplies = supplies.order_by(Supplies.id.asc())
+        supplies = supplies.filter(status_filter).order_by(Supplies.id.asc())
     return pagination(supplies, page, limit)
 
 

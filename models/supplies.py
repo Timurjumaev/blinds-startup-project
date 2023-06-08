@@ -9,7 +9,6 @@ from models.suppliers import Suppliers
 from models.users import Users
 
 
-
 class Supplies(Base):
     __tablename__ = "supplies"
     id = Column(Integer, autoincrement=True, primary_key=True)
@@ -27,21 +26,20 @@ class Supplies(Base):
     status = Column(Boolean)
     user_id2 = Column(Integer)
 
-
     material = relationship('Materials', foreign_keys=[material_id],
-    primaryjoin=lambda: and_(Materials.id == Supplies.material_id))
+                            primaryjoin=lambda: and_(Materials.id == Supplies.material_id))
 
     mechanism = relationship('Mechanisms', foreign_keys=[mechanism_id],
-    primaryjoin=lambda: and_(Mechanisms.id == Supplies.mechanism_id))
+                             primaryjoin=lambda: and_(Mechanisms.id == Supplies.mechanism_id))
 
     currency = relationship('Currencies', foreign_keys=[currency_id],
-    primaryjoin=lambda: and_(Currencies.id == Supplies.currency_id))
+                            primaryjoin=lambda: and_(Currencies.id == Supplies.currency_id))
 
     supplier = relationship('Suppliers', foreign_keys=[supplier_id],
-    primaryjoin=lambda: and_(Suppliers.id == Supplies.supplier_id))
+                            primaryjoin=lambda: and_(Suppliers.id == Supplies.supplier_id))
 
     user1 = relationship('Users', foreign_keys=[user_id1],
-    primaryjoin=lambda: and_(Users.id == Supplies.user_id1))
+                         primaryjoin=lambda: and_(Users.id == Supplies.user_id1))
 
     user2 = relationship('Users', foreign_keys=[user_id2],
-    primaryjoin=lambda: and_(Users.id == Supplies.user_id2))
+                         primaryjoin=lambda: and_(Users.id == Supplies.user_id2))
