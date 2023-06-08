@@ -20,11 +20,11 @@ def all_trades(search, page, limit, order_id, stage_id, db):
     if order_id:
         order_filter = Trades.order_id == order_id
     else:
-        order_filter = None
+        order_filter = Trades.id > 0
     if stage_id:
         stage_filter = Trades.stage_id == stage_id
     else:
-        stage_filter = None
+        stage_filter = Trades.id > 0
     if search:
         search_formatted = "%{}%".format(search)
         search_filter = (Users.name.like(search_formatted)) | \
@@ -32,7 +32,7 @@ def all_trades(search, page, limit, order_id, stage_id, db):
                         (Materials.name.like(search_formatted)) | \
                         (Stages.name.like(search_formatted))
     else:
-        search_filter = None
+        search_filter = Trades.id > 0
     trades = trades.filter(search_filter, order_filter, stage_filter).order_by(Trades.id.asc())
     return pagination(trades, page, limit)
 

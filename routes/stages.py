@@ -1,6 +1,6 @@
 import inspect
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from functions.stages import create_stage_e, update_stage_e
 from models.stages import Stages
 from utils.login import get_current_active_user
@@ -18,7 +18,7 @@ stages_router = APIRouter(
 @stages_router.get("/get_stages")
 def get_stages(db: Session = Depends(database), current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    return db.query(Stages).all()
+    return db.query(Stages).options(joinedload(Stages.category)).all()
 
 
 @stages_router.post("/create_stage")
