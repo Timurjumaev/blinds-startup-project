@@ -1,3 +1,5 @@
+from sqlalchemy.orm import joinedload
+
 from models.mechanisms import Mechanisms
 from models.trades import Trades
 from utils.db_operations import save_in_db, get_in_db
@@ -7,7 +9,7 @@ from fastapi import HTTPException
 
 
 def all_trade_mechanisms(search, page, limit, trade_id, db):
-    trade_mechanism = db.query(Trade_mechanisms)
+    trade_mechanism = db.query(Trade_mechanisms).options(joinedload(Trade_mechanisms.mechanism))
     search_formatted = "%{}%".format(search)
     search_filter = Mechanisms.name.like(search_formatted)
     if search and trade_id:

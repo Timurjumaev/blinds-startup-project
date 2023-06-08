@@ -30,6 +30,7 @@ from routes.warehouse_materials import warehouse_materials_router
 from routes.warehouses import warehouses_router
 from routes.trades import trades_router
 from utils.login import login_router
+# from utils.refresh import refresh_router
 
 app = FastAPI()
 
@@ -61,6 +62,7 @@ app.include_router(standart_mechanisms_router)
 app.include_router(trade_mechanisms_router)
 app.include_router(loans_router)
 app.include_router(files_router)
+# app.include_router(refresh_router)
 
 
 app.add_middleware(

@@ -17,7 +17,9 @@ class Loans(Base):
     comment = Column(String(999))
 
     currency = relationship('Currencies', foreign_keys=[currency_id],
-                         primaryjoin=lambda: and_(Currencies.id == Loans.currency_id))
+                            primaryjoin=lambda: and_(Currencies.id == Loans.currency_id))
 
     order = relationship('Orders', foreign_keys=[order_id],
                          primaryjoin=lambda: and_(Orders.id == Loans.order_id))
+
+

@@ -21,7 +21,7 @@ categories_router = APIRouter(
 
 @categories_router.get("/get_categories")
 def get_categories(search: str = None, id: int = 0, page: int = 0, limit: int = 25, db: Session = Depends(database),
-              current_user: CreateUser = Depends(get_current_active_user)):
+                   current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")

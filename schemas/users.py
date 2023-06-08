@@ -22,3 +22,11 @@ class UpdateUser(BaseModel):
     role: str
     status: bool
     phones: List[UpdatePhone]
+
+
+class TokenUser(BaseModel):
+    id: int
+    username: str
+    role: str
+    token: str
+

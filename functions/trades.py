@@ -12,18 +12,28 @@ from utils.pagination import pagination
 from models.trades import Trades
 
 
-def all_trades(search, page, limit, db):
+def all_trades(search, page, limit, order_id, stage_id, db):
     trades = db.query(Trades).options(joinedload(Trades.user),
                                       joinedload(Trades.material),
                                       joinedload(Trades.stage),
                                       joinedload(Trades.trade_mechanism))
+    if order_id:
+        order_filter = Trades.order_id == order_id
+    else:
+        order_filter = None
+    if stage_id:
+        stage_filter = Trades.stage_id == stage_id
+    else:
+        stage_filter = None
     if search:
         search_formatted = "%{}%".format(search)
-        trades = trades.filter((Users.name.like(search_formatted)) |
-                               (Users.username.like(search_formatted)) |
-                               (Materials.name.like(search_formatted)) |
-                               (Stages.name.like(search_formatted)))
-    trades = trades.order_by(Trades.id.asc())
+        search_filter = (Users.name.like(search_formatted)) | \
+                        (Users.username.like(search_formatted)) | \
+                        (Materials.name.like(search_formatted)) | \
+                        (Stages.name.like(search_formatted))
+    else:
+        search_filter = None
+    trades = trades.filter(search_filter, order_filter, stage_filter).order_by(Trades.id.asc())
     return pagination(trades, page, limit)
 
 

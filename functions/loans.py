@@ -7,7 +7,7 @@ from utils.pagination import pagination
 
 
 def all_loans(search, page, limit, order_id, db):
-    loans = db.query(Loans).options(joinedload(Loans.order))
+    loans = db.query(Loans).options(joinedload(Loans.order), joinedload(Loans.currency))
     search_formatted = "%{}%".format(search)
     search_filter = Loans.money.like(search_formatted) | \
                     Loans.residual.like(search_formatted) | \
