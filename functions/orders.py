@@ -3,7 +3,13 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
 
+from models.collactions import Collactions
+from models.currencies import Currencies
 from models.customers import Customers
+from models.discounts import Discounts
+from models.materials import Materials
+from models.prices import Prices
+from models.trades import Trades
 from models.users import Users
 from utils.db_operations import save_in_db, get_in_db
 from utils.pagination import pagination
@@ -24,6 +30,35 @@ def all_orders(search, page, limit, customer_id, db):
     else:
         orders = orders.order_by(Orders.id.asc())
     return pagination(orders, page, limit)
+
+
+def one_order_r(order_id, db):
+    this_order = get_in_db(db, Orders, order_id)
+    trades = db.query(Trades).filter(Trades.order_id == order_id).all()
+    money = 0
+    for trade in trades:
+        material = db.query(Materials).filter(Materials.id == trade.material_id).first()
+        collaction = db.query(Collactions).filter(Collactions.id == material.collaction_id).first()
+        price = db.query(Prices).filter(Prices.collaction_id == collaction.id,
+                                        Prices.width1 <= trade.width,
+                                        Prices.width2 >= trade.width,
+                                        Prices.height1 <= trade.height,
+                                        Prices.height2 >= trade.height).first()
+        if price:
+            this_money = price.price
+            this_currency = db.query(Currencies).filter(Currencies.id == price.currency_id).first()
+            this_money = this_money * this_currency.price
+            money = money + this_money
+        else:
+            raise HTTPException(status_code=400, detail="Ushbu o'lchamdagi material tegishli bo'lgan kolleksiyaga hali narx belgilanmagan!")
+    this_customer = db.query(Customers).filter(Customers.id == this_order.customer_id).first()
+    this_discount = db.query(Discounts).filter(Discounts.type == this_customer.type).first()
+    if this_discount is None:
+        raise HTTPException(status_code=400, detail="Mijozni typega teng bolgan typeli discount topilmadi!")
+    total_discount = (money * this_discount.percent) / 100
+    total_money = money - total_discount
+    return (this_order,
+            {"money": total_money})
 
 
 def create_order_r(form, db, thisuser):

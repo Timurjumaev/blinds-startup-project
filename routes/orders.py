@@ -2,7 +2,7 @@ import inspect
 
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from functions.orders import all_orders, create_order_r, update_order_r, delete_order_r
+from functions.orders import all_orders, create_order_r, update_order_r, delete_order_r, one_order_r
 from models.orders import Orders
 from utils.login import get_current_active_user
 from utils.db_operations import get_in_db
@@ -24,7 +24,7 @@ def get_orders(search: str = None, id: int = 0, page: int = 0, limit: int = 25, 
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return get_in_db(db, Orders, id)
+        return one_order_r(id, db)
     return all_orders(search, page, limit, customer_id, db)
 
 

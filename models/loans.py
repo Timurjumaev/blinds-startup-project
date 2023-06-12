@@ -15,6 +15,7 @@ class Loans(Base):
     order_id = Column(Integer)
     return_date = Column(Date)
     comment = Column(String(999))
+    status = Column(Boolean)
 
     currency = relationship('Currencies', foreign_keys=[currency_id],
                             primaryjoin=lambda: and_(Currencies.id == Loans.currency_id))
