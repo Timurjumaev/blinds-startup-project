@@ -12,7 +12,6 @@ class Orders(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     time = Column(DateTime)
     customer_id = Column(Integer)
-    discount = Column(Numeric)
     status = Column(String(999))
     user_id = Column(Integer)
     delivery_date = Column(Date)

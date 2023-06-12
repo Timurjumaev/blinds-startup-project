@@ -61,7 +61,9 @@ def update_file_e(id, new_file, source, source_id, db):
 
 
 def delete_file_e(id, db):
-    get_in_db(db, Uploaded_files, id)
+    file = get_in_db(db, Uploaded_files, id)
+    if file.source == "collaction" or file.source == "material" or file.source == "mechanism":
+        raise HTTPException(status_code=400, detail="Userdan boshqasini rasmini ochirib bolmaydi!")
     db.query(Uploaded_files).filter(Uploaded_files.id == id).delete()
     db.commit()
 

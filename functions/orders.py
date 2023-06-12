@@ -1,8 +1,6 @@
 from datetime import datetime
-
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
-
 from models.collactions import Collactions
 from models.currencies import Currencies
 from models.customers import Customers
@@ -66,7 +64,6 @@ def create_order_r(form, db, thisuser):
     new_order_db = Orders(
         time=datetime.now(),
         customer_id=form.customer_id,
-        discount=form.discount,
         status="false",
         user_id=thisuser.id,
         delivery_date=form.delivery_date
@@ -85,7 +82,6 @@ def update_order_r(form, db, thisuser):
                             detail="Updated_status is only false, true or done!")
     db.query(Orders).filter(Orders.id == form.id).update({
         Orders.customer_id: form.customer_id,
-        Orders.discount: form.discount,
         Orders.status: form.status,
         Orders.user_id: thisuser.id,
         Orders.delivery_date: form.delivery_date
