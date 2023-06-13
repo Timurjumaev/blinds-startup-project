@@ -14,7 +14,8 @@ def all_warehouse_materials(search, page, limit, inspection, db):
     wms = db.query(Warehouse_materials).options(joinedload(Warehouse_materials.material),
                                                 joinedload(Warehouse_materials.warehouse),
                                                 joinedload(Warehouse_materials.mechanism),
-                                                joinedload(Warehouse_materials.currency))
+                                                joinedload(Warehouse_materials.currency),
+                                                joinedload(Warehouse_materials.cell))
     search_formatted = "%{}%".format(search)
     search_filter = (Materials.name.like(search_formatted)) | \
                     (Warehouses.name.like(search_formatted)) | \

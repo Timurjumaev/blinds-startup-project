@@ -5,6 +5,7 @@ from models.collactions import Collactions
 from models.currencies import Currencies
 from models.customers import Customers
 from models.discounts import Discounts
+from models.incomes import Incomes
 from models.materials import Materials
 from models.prices import Prices
 from models.trades import Trades
@@ -52,9 +53,15 @@ def one_order_r(order_id, db):
     this_customer = db.query(Customers).filter(Customers.id == this_order.customer_id).first()
     this_discount = db.query(Discounts).filter(Discounts.type == this_customer.type).first()
     if this_discount is None:
-        raise HTTPException(status_code=400, detail="Mijozni typega teng bolgan typeli discount topilmadi!")
+        raise HTTPException(status_code=400, detail="Mijozni turiga teng bolgan turdagi chegirma topilmadi!")
     total_discount = (money * this_discount.percent) / 100
     total_money = money - total_discount
+    this_income = db.query(Incomes).filter(Incomes.source == "order", Incomes.source_id == this_order.id).first()
+    if this_income:
+        db.query(Orders).filter(Orders.id == this_order.id).update({
+            Orders.income_status: False
+        })
+        db.commit()
     return (this_order,
             {"money": total_money})
 
@@ -66,7 +73,8 @@ def create_order_r(form, db, thisuser):
         customer_id=form.customer_id,
         status="false",
         user_id=thisuser.id,
-        delivery_date=form.delivery_date
+        delivery_date=form.delivery_date,
+        income_status=True
     )
     save_in_db(db, new_order_db)
 

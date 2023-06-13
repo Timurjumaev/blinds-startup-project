@@ -23,18 +23,17 @@ class Warehouse_materials(Base):
     warehouse_id = Column(Integer)
     cell_id = Column(Integer)
 
-
     material = relationship('Materials', foreign_keys=[material_id],
-    primaryjoin=lambda: and_(Materials.id == Warehouse_materials.material_id))
+                            primaryjoin=lambda: and_(Materials.id == Warehouse_materials.material_id))
 
     mechanism = relationship('Mechanisms', foreign_keys=[mechanism_id],
-    primaryjoin=lambda: and_(Mechanisms.id == Warehouse_materials.mechanism_id))
+                             primaryjoin=lambda: and_(Mechanisms.id == Warehouse_materials.mechanism_id))
 
     currency = relationship('Currencies', foreign_keys=[currency_id],
-    primaryjoin=lambda: and_(Currencies.id == Warehouse_materials.currency_id))
+                            primaryjoin=lambda: and_(Currencies.id == Warehouse_materials.currency_id))
 
     warehouse = relationship('Warehouses', foreign_keys=[warehouse_id],
-    primaryjoin=lambda: and_(Warehouses.id == Warehouse_materials.warehouse_id))
+                             primaryjoin=lambda: and_(Warehouses.id == Warehouse_materials.warehouse_id))
 
     cell = relationship('Cells', foreign_keys=[cell_id],
-    primaryjoin=lambda: and_(Cells.id == Warehouse_materials.cell_id))
+                        primaryjoin=lambda: and_(Cells.id == Warehouse_materials.cell_id))

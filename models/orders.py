@@ -15,9 +15,10 @@ class Orders(Base):
     status = Column(String(999))
     user_id = Column(Integer)
     delivery_date = Column(Date)
+    income_status = Column(Boolean)
 
     customer = relationship('Customers', foreign_keys=[customer_id],
-                        primaryjoin=lambda: and_(Customers.id == Orders.customer_id))
+                            primaryjoin=lambda: and_(Customers.id == Orders.customer_id))
 
     user = relationship('Users', foreign_keys=[user_id],
                         primaryjoin=lambda: and_(Users.id == Orders.user_id))
