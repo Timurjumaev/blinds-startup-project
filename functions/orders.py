@@ -10,16 +10,18 @@ from models.materials import Materials
 from models.prices import Prices
 from models.trades import Trades
 from models.users import Users
-from utils.db_operations import save_in_db, get_in_db
+from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.orders import Orders
 
 
-def all_orders(search, page, limit, customer_id, db):
-    orders = db.query(Orders).options(joinedload(Orders.customer),
-                                      joinedload(Orders.user))
+def all_orders(search, page, limit, customer_id, db, thisuser):
+    orders = db.query(Orders).filter(Orders.branch_id == thisuser.branch_id).options(joinedload(Orders.customer),
+                                                                                     joinedload(Orders.user))
     search_formatted = "%{}%".format(search)
-    search_filter = Users.name.like(search_formatted) | Users.username.like(search_formatted) | Customers.name.like(search_formatted)
+    search_filter = Users.name.like(search_formatted) | \
+                    Users.username.like(search_formatted) | \
+                    Customers.name.like(search_formatted)
     if search and customer_id:
         orders = orders.filter(search_filter, Orders.customer_id == customer_id).order_by(Orders.id.asc())
     elif search is None and customer_id:
@@ -31,8 +33,8 @@ def all_orders(search, page, limit, customer_id, db):
     return pagination(orders, page, limit)
 
 
-def one_order_r(order_id, db):
-    this_order = get_in_db(db, Orders, order_id)
+def one_order_r(order_id, db, thisuser):
+    this_order = the_one(db, Orders, order_id, thisuser)
     trades = db.query(Trades).filter(Trades.order_id == order_id).all()
     money = 0
     for trade in trades:
@@ -67,20 +69,21 @@ def one_order_r(order_id, db):
 
 
 def create_order_r(form, db, thisuser):
-    get_in_db(db, Customers, form.customer_id)
+    the_one(db, Customers, form.customer_id, thisuser)
     new_order_db = Orders(
         time=datetime.now(),
         customer_id=form.customer_id,
         status="false",
         user_id=thisuser.id,
         delivery_date=form.delivery_date,
-        income_status=True
+        income_status=True,
+        branch_id=thisuser.branch_id
     )
     save_in_db(db, new_order_db)
 
 
 def update_order_r(form, db, thisuser):
-    get_in_db(db, Orders, form.id), get_in_db(db, Customers, form.customer_id)
+    the_one(db, Orders, form.id, thisuser), the_one(db, Customers, form.customer_id, thisuser)
     if db.query(Orders).filter(Orders.id == form.id).first().status == "done":
         raise HTTPException(status_code=400, detail="This Orders.status is already 'done'!")
     if db.query(Orders).filter(Orders.id == form.id).first().status == "false" and form.status != "false" and form.status != "true":
@@ -97,8 +100,8 @@ def update_order_r(form, db, thisuser):
     db.commit()
 
 
-def delete_order_r(id, db):
-    get_in_db(db, Orders, id)
+def delete_order_r(id, db, user):
+    the_one(db, Orders, id, user)
     db.query(Orders).filter(Orders.id == id).delete()
     db.commit()
 

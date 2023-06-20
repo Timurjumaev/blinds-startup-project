@@ -5,10 +5,10 @@ from models.materials import Materials
 from models.mechanisms import Mechanisms
 from models.uploaded_files import Uploaded_files
 from models.users import Users
-from utils.db_operations import save_in_db, get_in_db
+from utils.db_operations import save_in_db, the_one
 
 
-def create_file_e(new_file, source, source_id, db):
+def create_file_e(new_file, source, source_id, db, thisuser):
     if db.query(Uploaded_files).filter(Uploaded_files.source == source,
                                        Uploaded_files.source_id == source_id).first():
         raise HTTPException(status_code=400, detail="This source already have his own file!")
@@ -26,14 +26,15 @@ def create_file_e(new_file, source, source_id, db):
             file=new_file.filename,
             source=source,
             source_id=source_id,
+            branch_id=thisuser.branch_id
         )
         save_in_db(db, new_file_db)
     else:
         raise HTTPException(status_code=400, detail="Source error!")
 
 
-def update_file_e(id, new_file, source, source_id, db):
-    get_in_db(db, Uploaded_files, id)
+def update_file_e(id, new_file, source, source_id, db, user):
+    the_one(db, Uploaded_files, id, user)
     this_file = db.query(Uploaded_files).filter(Uploaded_files.source == source,
                                                 Uploaded_files.source_id == source_id).first()
     if this_file and this_file.id != id:
@@ -60,8 +61,8 @@ def update_file_e(id, new_file, source, source_id, db):
         raise HTTPException(status_code=400, detail="Source error!")
 
 
-def delete_file_e(id, db):
-    file = get_in_db(db, Uploaded_files, id)
+def delete_file_e(id, db, user):
+    file = the_one(db, Uploaded_files, id, user)
     if file.source == "collaction" or file.source == "material" or file.source == "mechanism":
         raise HTTPException(status_code=400, detail="Userdan boshqasini rasmini ochirib bolmaydi!")
     db.query(Uploaded_files).filter(Uploaded_files.id == id).delete()

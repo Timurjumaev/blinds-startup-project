@@ -3,13 +3,14 @@ from sqlalchemy.orm import joinedload
 
 from functions.phones import create_phone, update_phone
 from models.phones import Phones
-from utils.db_operations import save_in_db, get_in_db
+from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.suppliers import Suppliers
 
 
-def all_suppliers(search, page, limit, db):
-    suppliers = db.query(Suppliers).join(Suppliers.phones).options(joinedload(Suppliers.phones))
+def all_suppliers(search, page, limit, db, thisuser):
+    suppliers = db.query(Suppliers).filter(Suppliers.branch_id == thisuser.branch_id).\
+        options(joinedload(Suppliers.phones))
     if search:
         search_formatted = "%{}%".format(search)
         suppliers = suppliers.filter(Suppliers.name.like(search_formatted))
@@ -22,20 +23,18 @@ def create_supplier_r(form, db, thisuser):
         name=form.name,
         address=form.address,
         map_long=form.map_long,
-        map_lat=form.map_lat
+        map_lat=form.map_lat,
+        branch_id=thisuser.branch_id
     )
     save_in_db(db, new_supplier_db)
     for i in form.phones:
         comment = i.comment
         number = i.number
-        create_phone(comment, number, new_supplier_db.id, thisuser.id, db, 'supplier')
+        create_phone(comment, number, new_supplier_db.id, thisuser.id, db, 'supplier', thisuser.branch_id)
 
 
 def update_supplier_r(form, db, thisuser):
-    if get_in_db(db, Suppliers, form.id) is None\
-            or get_in_db(db, Phones, form.phones[0].id) is None:
-        raise HTTPException(status_code=400, detail="Supplier or Phone not found!")
-
+    the_one(db, Suppliers, form.id, thisuser), the_one(db, Phones, form.phones[0].id, thisuser)
     db.query(Suppliers).filter(Suppliers.id == form.id).update({
         Suppliers.name: form.name,
         Suppliers.address: form.address,

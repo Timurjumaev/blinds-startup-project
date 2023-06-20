@@ -1,5 +1,4 @@
 from sqlalchemy.orm import relationship
-
 from db import Base
 from sqlalchemy import *
 from models.materials import Materials
@@ -25,6 +24,7 @@ class Supplies(Base):
     user_id1 = Column(Integer)
     status = Column(Boolean)
     user_id2 = Column(Integer)
+    branch_id = Column(Integer)
 
     material = relationship('Materials', foreign_keys=[material_id],
                             primaryjoin=lambda: and_(Materials.id == Supplies.material_id))

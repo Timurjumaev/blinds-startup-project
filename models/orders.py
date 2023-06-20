@@ -16,6 +16,7 @@ class Orders(Base):
     user_id = Column(Integer)
     delivery_date = Column(Date)
     income_status = Column(Boolean)
+    branch_id = Column(Integer)
 
     customer = relationship('Customers', foreign_keys=[customer_id],
                             primaryjoin=lambda: and_(Customers.id == Orders.customer_id))

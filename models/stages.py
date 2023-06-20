@@ -1,10 +1,7 @@
 from sqlalchemy.orm import relationship
-
 from db import Base
 from sqlalchemy import *
 from models.categories import Categories
-
-
 
 
 class Stages(Base):
@@ -14,6 +11,7 @@ class Stages(Base):
     comment = Column(String(999))
     category_id = Column(Integer)
     number = Column(Integer)
+    branch_id = Column(Integer)
 
     category = relationship('Categories', foreign_keys=[category_id],
                             primaryjoin=lambda: and_(Categories.id == Stages.category_id))

@@ -10,6 +10,8 @@ class Collactions(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String(999))
     category_id = Column(Integer)
+    branch_id = Column(Integer)
+
 
     category = relationship('Categories', foreign_keys=[category_id],
                             primaryjoin=lambda: and_(Categories.id == Collactions.category_id))

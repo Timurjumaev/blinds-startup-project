@@ -18,7 +18,7 @@ discounts_router = APIRouter(
 @discounts_router.get("/get_discounts")
 def get_discounts(db: Session = Depends(database), current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    return db.query(Discounts).all()
+    return db.query(Discounts).filter(Discounts.branch_id == current_user.branch_id).all()
 
 
 @discounts_router.post("/create_discount")
@@ -33,7 +33,7 @@ def create_discount(new_discount: CreateDiscount, db: Session = Depends(database
 def delete_discount(id: int, db: Session = Depends(database),
                     current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    delete_discount_t(id, db)
+    delete_discount_t(id, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

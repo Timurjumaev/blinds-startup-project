@@ -1,6 +1,7 @@
 from db import Base
 from sqlalchemy import *
 from sqlalchemy.orm import relationship, backref
+from models.branches import Branches
 from models.customers import Customers
 from models.suppliers import Suppliers
 from models.users import Users
@@ -15,21 +16,27 @@ class Phones(Base):
     source = Column(String(999))
     source_id = Column(Integer)
     user_id = Column(Integer)
-
+    branch_id = Column(Integer)
 
     created_user = relationship('Users', foreign_keys=[user_id],
-                        primaryjoin=lambda: and_(Users.id == Phones.user_id))
+                                primaryjoin=lambda: and_(Users.id == Phones.user_id))
 
     this_user = relationship('Users', foreign_keys=[source_id],
-                        primaryjoin=lambda: and_(Users.id == Phones.source_id, Phones.source == "user"), backref=backref("phones"))
-
-    customer = relationship('Customers', foreign_keys=[source_id],
-                         primaryjoin=lambda: and_(Customers.id == Phones.source_id, Phones.source == "customer"), backref=("phones"))
-
-    supplier = relationship('Suppliers', foreign_keys=[source_id],
-                             primaryjoin=lambda: and_(Suppliers.id == Phones.source_id, Phones.source == "supplier"),
+                             primaryjoin=lambda: and_(Users.id == Phones.source_id, Phones.source == "user"),
                              backref=backref("phones"))
 
-    warehouse = relationship('Warehouses', foreign_keys=[source_id],
-                            primaryjoin=lambda: and_(Warehouses.id == Phones.source_id, Phones.source == "warehouse"),
+    customer = relationship('Customers', foreign_keys=[source_id],
+                            primaryjoin=lambda: and_(Customers.id == Phones.source_id, Phones.source == "customer"),
                             backref=backref("phones"))
+
+    supplier = relationship('Suppliers', foreign_keys=[source_id],
+                            primaryjoin=lambda: and_(Suppliers.id == Phones.source_id, Phones.source == "supplier"),
+                            backref=backref("phones"))
+
+    warehouse = relationship('Warehouses', foreign_keys=[source_id],
+                             primaryjoin=lambda: and_(Warehouses.id == Phones.source_id, Phones.source == "warehouse"),
+                             backref=backref("phones"))
+
+    branch = relationship('Branches', foreign_keys=[source_id],
+                          primaryjoin=lambda: and_(Branches.id == Phones.source_id, Phones.source == "branch"),
+                          backref=backref("phones"))

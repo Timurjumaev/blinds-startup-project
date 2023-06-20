@@ -21,8 +21,8 @@ def get_orders(search: str = None, id: int = 0, page: int = 0, limit: int = 25, 
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return one_order_r(id, db)
-    return all_orders(search, page, limit, customer_id, db)
+        return one_order_r(id, db, current_user)
+    return all_orders(search, page, limit, customer_id, db, current_user)
 
 
 @orders_router.post("/create_order")
@@ -45,7 +45,7 @@ def update_order(this_order: UpdateOrder, db: Session = Depends(database),
 def delete_order(id: int, db: Session = Depends(database),
                  current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    delete_order_r(id, db)
+    delete_order_r(id, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

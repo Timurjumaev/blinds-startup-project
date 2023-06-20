@@ -2,7 +2,6 @@ from db import Base
 from sqlalchemy import *
 
 
-
 class Categories(Base):
     __tablename__ = "categories"
     id = Column(Integer, autoincrement=True, primary_key=True)
@@ -11,3 +10,4 @@ class Categories(Base):
     height_norm = Column(Numeric)
     width_max = Column(Numeric)
     height_max = Column(Numeric)
+    branch_id = Column(Integer)

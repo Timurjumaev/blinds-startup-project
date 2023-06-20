@@ -11,6 +11,7 @@ class Materials(Base):
     name = Column(String(999))
     comment = Column(String(999))
     collaction_id = Column(Integer)
+    branch_id = Column(Integer)
 
     collaction = relationship('Collactions', foreign_keys=[collaction_id],
                               primaryjoin=lambda: and_(Collactions.id == Materials.collaction_id))

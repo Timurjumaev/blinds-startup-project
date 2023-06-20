@@ -1,13 +1,13 @@
 from sqlalchemy.orm import joinedload
 
 from models.collactions import Collactions
-from utils.db_operations import save_in_db, get_in_db
+from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.materials import Materials
 
 
-def all_materials(search, page, limit, col_id, db):
-    materials = db.query(Materials).options(joinedload(Materials.files))
+def all_materials(search, page, limit, col_id, db, thisuser):
+    materials = db.query(Materials).filter(Materials.branch_id == thisuser.branch_id).options(joinedload(Materials.files))
     if search:
         search_formatted = "%{}%".format(search)
         materials = materials.filter(Materials.name.like(search_formatted))
@@ -17,18 +17,19 @@ def all_materials(search, page, limit, col_id, db):
     return pagination(materials, page, limit)
 
 
-def create_material_l(form, db):
-    get_in_db(db, Collactions, form.collaction_id)
+def create_material_l(form, db, thisuser):
+    the_one(db, Collactions, form.collaction_id, thisuser)
     new_material_db = Materials(
         name=form.name,
         comment=form.comment,
-        collaction_id=form.collaction_id
+        collaction_id=form.collaction_id,
+        branch_id=thisuser.branch_id
     )
     save_in_db(db, new_material_db)
 
 
-def update_material_l(form, db):
-    get_in_db(db, Materials, form.id), get_in_db(db, Collactions, form.collaction_id)
+def update_material_l(form, db, user):
+    the_one(db, Materials, form.id, user), the_one(db, Collactions, form.collaction_id, user)
     db.query(Materials).filter(Materials.id == form.id).update({
         Materials.name: form.name,
         Materials.comment: form.comment,

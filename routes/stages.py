@@ -18,14 +18,14 @@ stages_router = APIRouter(
 @stages_router.get("/get_stages")
 def get_stages(db: Session = Depends(database), current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    return db.query(Stages).options(joinedload(Stages.category)).all()
+    return db.query(Stages).filter(Stages.branch_id == current_user.branch_id).options(joinedload(Stages.category)).all()
 
 
 @stages_router.post("/create_stage")
 def create_stage(new_stage: CreateStage, db: Session = Depends(database),
                  current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    create_stage_e(new_stage, db)
+    create_stage_e(new_stage, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 
@@ -33,5 +33,5 @@ def create_stage(new_stage: CreateStage, db: Session = Depends(database),
 def update_stage(this_stage: UpdateStage, db: Session = Depends(database),
                  current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    update_stage_e(this_stage, db)
+    update_stage_e(this_stage, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")

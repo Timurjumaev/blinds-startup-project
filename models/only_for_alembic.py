@@ -26,3 +26,4 @@ from models.trade_mechanisms import Trade_mechanisms
 from models.standart_mechanisms import Standart_mechanisms
 from models.loans import Loans
 from models.uploaded_files import Uploaded_files
+from models.branches import Branches

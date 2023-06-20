@@ -38,6 +38,11 @@ def update_in_db(
     return obj
 
 
+def the_one(db, model, id, thisuser):
+    the_one = db.query(model).filter(model.id == id, model.branch_id == thisuser.branch_id).first()
+    if not the_one:
+        raise HTTPException(status_code=400, detail="Not found!")
+    return the_one
 
 # def check_unique(session: Session) -> None:
 #     try:

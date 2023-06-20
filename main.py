@@ -2,6 +2,7 @@ from typing import Union
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routes.branches import branches_router
 from routes.categories import categories_router
 from routes.cells import cells_router
 from routes.collactions import collactions_router
@@ -62,6 +63,7 @@ app.include_router(standart_mechanisms_router)
 app.include_router(trade_mechanisms_router)
 app.include_router(loans_router)
 app.include_router(files_router)
+app.include_router(branches_router)
 # app.include_router(refresh_router)
 
 

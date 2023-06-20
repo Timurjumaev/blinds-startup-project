@@ -1,11 +1,10 @@
 import inspect
-
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from functions.supplies import create_supply_y, update_supply_y, all_supplies
 from models.supplies import Supplies
 from utils.login import get_current_active_user
-from utils.db_operations import get_in_db
+from utils.db_operations import the_one
 from schemas.users import CreateUser
 from schemas.supplies import CreateSupply, UpdateSupply
 from db import database
@@ -25,13 +24,13 @@ def get_supplies(search: str = None, id: int = 0, page: int = 0, limit: int = 25
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return get_in_db(db, Supplies, id)
-    return all_supplies(search, page, limit, supplier_id, status, db)
+        return the_one(db, Supplies, id, current_user)
+    return all_supplies(search, page, limit, supplier_id, status, db, current_user)
 
 
 @supplies_router.post("/create_supply")
 def create_supply(new_supply: CreateSupply, db: Session = Depends(database),
-                current_user: CreateUser = Depends(get_current_active_user)):
+                  current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     create_supply_y(new_supply, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
@@ -39,7 +38,7 @@ def create_supply(new_supply: CreateSupply, db: Session = Depends(database),
 
 @supplies_router.put("/update_supply")
 def update_supply(this_supply: UpdateSupply, db: Session = Depends(database),
-                current_user: CreateUser = Depends(get_current_active_user)):
+                  current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     update_supply_y(this_supply, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")

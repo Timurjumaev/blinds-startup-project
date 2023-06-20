@@ -1,14 +1,14 @@
 from sqlalchemy.orm import joinedload
-
 from models.users import Users
 from models.stage_users import Stage_users
-from utils.db_operations import save_in_db, get_in_db
+from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.stages import Stages
 
 
-def all_stage_users(search, page, limit, stage_id, db):
-    stage_users = db.query(Stage_users).options(joinedload(Stage_users.stage), joinedload(Stage_users.user))
+def all_stage_users(search, page, limit, stage_id, db, thisuser):
+    stage_users = db.query(Stage_users).filter(Stage_users.branch_id == thisuser.branch_id)\
+        .options(joinedload(Stage_users.stage), joinedload(Stage_users.user))
     if search and stage_id:
         search_formatted = "%{}%".format(search)
         stage_users = stage_users.filter(Stage_users.kpi.like(search_formatted) |
@@ -32,27 +32,28 @@ def all_stage_users(search, page, limit, stage_id, db):
     return pagination(stage_users, page, limit)
 
 
-def create_stage_users_s(form, db):
-    if get_in_db(db, Users, form.user_id) and get_in_db(db, Stages, form.stage_id):
-        new_stage_users_db = Stage_users(
-            user_id=form.user_id,
-            kpi=form.kpi,
-            stage_id=form.stage_id,
-        )
-        save_in_db(db, new_stage_users_db)
+def create_stage_users_s(form, db, thisuser):
+    the_one(db, Users, form.user_id, thisuser), the_one(db, Stages, form.stage_id, thisuser)
+    new_stage_users_db = Stage_users(
+        user_id=form.user_id,
+        kpi=form.kpi,
+        stage_id=form.stage_id,
+        branch_id=thisuser.branch_id
+    )
+    save_in_db(db, new_stage_users_db)
 
 
-def update_stage_users_s(form, db):
-    if get_in_db(db, Stage_users, form.id) and get_in_db(db, Users, form.user_id) and get_in_db(db, Stages, form.stage_id):
-        db.query(Stage_users).filter(Stage_users.id == form.id).update({
-            Stage_users.user_id: form.user_id,
-            Stage_users.kpi: form.kpi,
-            Stage_users.stage_id: form.stage_id,
-        })
-        db.commit()
+def update_stage_users_s(form, db, user):
+    the_one(db, Stage_users, form.id, user), the_one(db, Users, form.user_id, user), the_one(db, Stages, form.stage_id, user)
+    db.query(Stage_users).filter(Stage_users.id == form.id).update({
+        Stage_users.user_id: form.user_id,
+        Stage_users.kpi: form.kpi,
+        Stage_users.stage_id: form.stage_id,
+    })
+    db.commit()
 
 
-def delete_stage_user_r(id, db):
-    if get_in_db(db, Stage_users, id):
-        db.query(Stage_users).filter(Stage_users.id == id).delete()
-        db.commit()
+def delete_stage_user_r(id, db, user):
+    the_one(db, Stage_users, id, user)
+    db.query(Stage_users).filter(Stage_users.id == id).delete()
+    db.commit()

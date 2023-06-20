@@ -1,8 +1,6 @@
 from sqlalchemy.orm import relationship
-
 from db import Base
 from sqlalchemy import *
-
 from models.materials import Materials
 from models.orders import Orders
 from models.stages import Stages
@@ -21,6 +19,7 @@ class Trades(Base):
     comment = Column(String(999))
     order_id = Column(Integer)
     user_id = Column(Integer)
+    branch_id = Column(Integer)
 
     stage = relationship('Stages', foreign_keys=[stage_id],
                          primaryjoin=lambda: and_(Stages.id == Trades.stage_id))

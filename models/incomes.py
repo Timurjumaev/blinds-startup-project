@@ -22,6 +22,7 @@ class Incomes(Base):
     kassa_id = Column(Integer)
     comment = Column(String(999))
     updelstatus = Column(Boolean)
+    branch_id = Column(Integer)
 
     currency = relationship('Currencies', foreign_keys=[currency_id],
                             primaryjoin=lambda: and_(Currencies.id == Incomes.currency_id))

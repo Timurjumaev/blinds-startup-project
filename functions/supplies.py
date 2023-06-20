@@ -9,14 +9,16 @@ from models.mechanisms import Mechanisms
 from models.suppliers import Suppliers
 from models.currencies import Currencies
 from models.warehouses import Warehouses
-from utils.db_operations import save_in_db, get_in_db
+from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from sqlalchemy.orm import joinedload
 
 
-def all_supplies(search, page, limit, supplier_id, status, db):
-    supplies = db.query(Supplies).options(joinedload(Supplies.material), joinedload(Supplies.supplier),
-                                          joinedload(Supplies.mechanism), joinedload(Supplies.currency))
+def all_supplies(search, page, limit, supplier_id, status, db, thisuser):
+    supplies = db.query(Supplies).filter(Supplies.branch_id == thisuser.branch_id).options(joinedload(Supplies.material),
+                                                                                           joinedload(Supplies.supplier),
+                                                                                           joinedload(Supplies.mechanism),
+                                                                                           joinedload(Supplies.currency))
     if status:
         status_filter = Supplies.status == True
     elif status is False:
@@ -45,27 +47,28 @@ def all_supplies(search, page, limit, supplier_id, status, db):
 
 
 def create_supply_y(form, db, thisuser):
-    if get_in_db(db, Suppliers, form.supplier_id) and get_in_db(db, Currencies, form.currency_id):
-        if (db.query(Materials).filter(Materials.id == form.material_id).first() and form.mechanism_id == 0) or \
-                (db.query(Mechanisms).filter(Mechanisms.id == form.mechanism_id).first() and form.material_id == 0):
-            new_supply_db = Supplies(
-                material_id=form.material_id,
-                width=form.width,
-                height=form.height,
-                mechanism_id=form.mechanism_id,
-                quantity=form.quantity,
-                price=form.price,
-                currency_id=form.currency_id,
-                supplier_id=form.supplier_id,
-                cr_time=datetime.now(),
-                up_time=0,
-                user_id1=thisuser.id,
-                status=False,
-                user_id2=0
-            )
-            save_in_db(db, new_supply_db)
-        else:
-            raise HTTPException(status_code=400, detail="You must input material or mechanism!")
+    the_one(db, Suppliers, form.supplier_id, thisuser), the_one(db, Currencies, form.currency_id, thisuser)
+    if (db.query(Materials).filter(Materials.id == form.material_id).first() and form.mechanism_id == 0) or \
+            (db.query(Mechanisms).filter(Mechanisms.id == form.mechanism_id).first() and form.material_id == 0):
+        new_supply_db = Supplies(
+            material_id=form.material_id,
+            width=form.width,
+            height=form.height,
+            mechanism_id=form.mechanism_id,
+            quantity=form.quantity,
+            price=form.price,
+            currency_id=form.currency_id,
+            supplier_id=form.supplier_id,
+            cr_time=datetime.now(),
+            up_time=0,
+            user_id1=thisuser.id,
+            status=False,
+            user_id2=0,
+            branch_id=thisuser.branch_id
+        )
+        save_in_db(db, new_supply_db)
+    else:
+        raise HTTPException(status_code=400, detail="You must input material or mechanism!")
     supplier_balance = db.query(Supplier_balances).filter(Supplier_balances.supplier_id == form.supplier_id, Supplier_balances.currency_id == form.currency_id).first()
     if supplier_balance and db.query(Mechanisms).filter(Mechanisms.id == form.mechanism_id).first():
         db.query(Supplier_balances).filter(Supplier_balances.id == supplier_balance.id).update({
@@ -81,14 +84,17 @@ def create_supply_y(form, db, thisuser):
         new_supplier_balance_db = Supplier_balances(
             balance=form.price * form.width * form.height,
             currency_id=form.currency_id,
-            supplier_id=form.supplier_id
+            supplier_id=form.supplier_id,
+            branch_id=thisuser.branch_id
         )
         save_in_db(db, new_supplier_balance_db)
     elif supplier_balance is None and db.query(Mechanisms).filter(Mechanisms.id == form.mechanism_id).first():
         new_supplier_balance_db = Supplier_balances(
             balance=form.price * form.quantity,
             currency_id=form.currency_id,
-            supplier_id=form.supplier_id
+            supplier_id=form.supplier_id,
+            branch_id=thisuser.branch_id
+
         )
         save_in_db(db, new_supplier_balance_db)
 
@@ -99,7 +105,7 @@ def update_supply_y(form, db, thisuser):
     mechanism = db.query(Mechanisms).filter(Mechanisms.id == form.mechanism_id).first()
     if supply_verification is None:
         raise HTTPException(status_code=400, detail="Supply not found or this supply already added to warehouse materials!")
-    get_in_db(db, Suppliers, form.supplier_id), get_in_db(db, Currencies, form.currency_id)
+    the_one(db, Suppliers, form.supplier_id, thisuser), the_one(db, Currencies, form.currency_id, thisuser)
     if (material and mechanism) or (form.mechanism_id == 0 and form.material_id == 0):
         raise HTTPException(status_code=400, detail="You may input only Material or only Mechanism")
     supplier_filter = db.query(Supplier_balances).filter(Supplier_balances.supplier_id == form.supplier_id,
@@ -130,7 +136,7 @@ def update_supply_y(form, db, thisuser):
     if form.status == False:
         user_id2 = 0
     else:
-        get_in_db(db, Warehouses, form.warehouse_id), get_in_db(db, Cells, form.cell_id)
+        the_one(db, Warehouses, form.warehouse_id, thisuser), the_one(db, Cells, form.cell_id, thisuser)
         user_id2 = thisuser.id
         new_warehouse_materials_db = Warehouse_materials(
             material_id=form.material_id,

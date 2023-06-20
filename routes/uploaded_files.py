@@ -18,7 +18,7 @@ files_router = APIRouter(
 def create_file(new_file: UploadFile = File(...), source: str = None, source_id: int = None,
                 db: Session = Depends(database), current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    create_file_e(new_file, source, source_id, db)
+    create_file_e(new_file, source, source_id, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 
@@ -26,14 +26,14 @@ def create_file(new_file: UploadFile = File(...), source: str = None, source_id:
 def update_category(id: int = None, new_file: UploadFile = File(...), source: str = None, source_id: int = None,
                     db: Session = Depends(database), current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    update_file_e(id, new_file, source, source_id, db)
+    update_file_e(id, new_file, source, source_id, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 
 @files_router.delete("/delete_file")
 def delete_file(id: int, db: Session = Depends(database), current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    delete_file_e(id, db)
+    delete_file_e(id, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

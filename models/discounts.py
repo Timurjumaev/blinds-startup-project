@@ -12,6 +12,7 @@ class Discounts(Base):
     type = Column(String(999))
     percent = Column(Numeric)
     user_id = Column(Integer)
+    branch_id = Column(Integer)
 
     user = relationship('Users', foreign_keys=[user_id],
-                              primaryjoin=lambda: and_(Users.id == Discounts.user_id))
+                        primaryjoin=lambda: and_(Users.id == Discounts.user_id))

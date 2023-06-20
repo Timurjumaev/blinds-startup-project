@@ -2,14 +2,15 @@ from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
 from functions.phones import create_phone, update_phone
 from models.phones import Phones
-from utils.db_operations import save_in_db, get_in_db
+from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.users import Users
 from utils.login import get_password_hash
 
 
-def all_users(search, page, limit, status, db):
-    users = db.query(Users).options(joinedload(Users.phones), joinedload(Users.files))
+def all_users(search, page, limit, status, db, thisuser):
+    users = db.query(Users).filter(Users.branch_id == thisuser.branch_id).options(joinedload(Users.phones),
+                                                                                  joinedload(Users.files))
     if search:
         search_formatted = "%{}%".format(search)
         users = users.filter(Users.name.like(search_formatted))
@@ -26,7 +27,8 @@ def all_users(search, page, limit, status, db):
 def create_user_r(form, db, thisuser):
     if db.query(Users).filter(Users.username == form.username).first():
         raise HTTPException(status_code=400, detail="Username error")
-    if form.role != "admin" and form.role != "worker" and form.role != "warehouseman":
+    if form.role != "admin" and form.role != "worker" and form.role != "warehouseman" \
+            and form.role != "crudadmin" and form.role != "crudoperator":
         raise HTTPException(status_code=400, detail="Role error!")
     password_hash = get_password_hash(form.password)
     new_user_db = Users(
@@ -35,18 +37,20 @@ def create_user_r(form, db, thisuser):
         password=form.password,
         password_hash=password_hash,
         role=form.role,
-        status=form.status
+        status=form.status,
+        branch_id=thisuser.branch_id
     )
     save_in_db(db, new_user_db)
     for i in form.phones:
         comment = i.comment
         number = i.number
-        create_phone(comment, number, new_user_db.id, thisuser.id, db, 'user')
+        create_phone(comment, number, new_user_db.id, thisuser.id, db, 'user', thisuser.branch_id)
 
 
 def update_user_r(form, db, thisuser):
-    get_in_db(db, Users, form.id), get_in_db(db, Phones, form.phones[0].id)
-    if form.role != "admin" and form.role != "worker" and form.role != "warehouseman":
+    the_one(db, Users, form.id, thisuser), the_one(db, Phones, form.phones[0].id, thisuser)
+    if form.role != "admin" and form.role != "worker" and form.role != "warehouseman" \
+            and form.role != "crudadmin" and form.role != "crudoperator":
         raise HTTPException(status_code=400, detail="Role error!")
 
     password_hash = get_password_hash(form.password)
@@ -65,6 +69,14 @@ def update_user_r(form, db, thisuser):
         comment = i.comment
         number = i.number
         update_phone(phone_id, comment, number, form.id, thisuser.id, db, 'user')
+
+
+def user_of_token_n(token, db, user):
+    this_user = db.query(Users).filter(Users.token == token, Users.branch_id == user.branch_id).first()
+    if this_user:
+        return this_user
+    else:
+        raise HTTPException(status_code=400, detail="Bunday tokenli user mavjud emas!")
 
 
 

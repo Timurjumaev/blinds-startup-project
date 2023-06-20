@@ -1,45 +1,45 @@
 import inspect
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from functions.incomes import all_incomes, create_income_e, delete_income_e
-from models.incomes import Incomes
+from functions.branches import all_branches, create_branch_ch, update_branch_ch
+from models.branches import Branches
 from utils.login import get_current_active_user
-from utils.db_operations import the_one
-from schemas.incomes import CreateIncome
+from utils.db_operations import get_in_db
+from schemas.branches import CreateBranch, UpdateBranch
 from schemas.users import CreateUser
 from db import database
 from utils.role_verification import role_verification
 
-incomes_router = APIRouter(
-    prefix="/incomes",
-    tags=["Incomes operation"]
+branches_router = APIRouter(
+    prefix="/branches",
+    tags=["Branches operation"]
 )
 
 
-@incomes_router.get("/get_incomes")
-def get_incomes(search: str = None, id: int = 0, page: int = 0, limit: int = 25, kassa_id: int = None,
-                db: Session = Depends(database), current_user: CreateUser = Depends(get_current_active_user)):
+@branches_router.get("/get_branches")
+def get_branches(search: str = None, id: int = 0, page: int = 0, limit: int = 25, db: Session = Depends(database),
+                 current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return the_one(db, Incomes, id, current_user)
-    return all_incomes(search, page, limit, kassa_id, db, current_user)
+        return get_in_db(db, Branches, id)
+    return all_branches(search, page, limit, db)
 
 
-@incomes_router.post("/create_income")
-def create_income(new_income: CreateIncome, db: Session = Depends(database),
+@branches_router.post("/create_branch")
+def create_branch(new_branch: CreateBranch, db: Session = Depends(database),
                   current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    create_income_e(new_income, db, current_user)
+    create_branch_ch(new_branch, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 
-@incomes_router.delete("/delete_income")
-def delete_income(id: int, db: Session = Depends(database),
+@branches_router.put("/update_branch")
+def update_branch(this_branch: UpdateBranch, db: Session = Depends(database),
                   current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    delete_income_e(id, db, current_user)
+    update_branch_ch(this_branch, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

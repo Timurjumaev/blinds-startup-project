@@ -22,6 +22,7 @@ class Warehouse_materials(Base):
     currency_id = Column(Integer)
     warehouse_id = Column(Integer)
     cell_id = Column(Integer)
+    branch_id = Column(Integer)
 
     material = relationship('Materials', foreign_keys=[material_id],
                             primaryjoin=lambda: and_(Materials.id == Warehouse_materials.material_id))

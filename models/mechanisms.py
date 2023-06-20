@@ -13,6 +13,7 @@ class Mechanisms(Base):
     comment = Column(String(999))
     collaction_id = Column(Integer)
     olchov = Column(String(999))
+    branch_id = Column(Integer)
 
     collaction = relationship('Collactions', foreign_keys=[collaction_id],
                               primaryjoin=lambda: and_(Collactions.id == Mechanisms.collaction_id))

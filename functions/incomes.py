@@ -12,24 +12,24 @@ from models.orders import Orders
 from models.prices import Prices
 from models.trades import Trades
 from models.users import Users
-from utils.db_operations import save_in_db, get_in_db
+from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.incomes import Incomes
 
 
-def all_incomes(search, page, limit, kassa_id, db):
+def all_incomes(search, page, limit, kassa_id, db, thisuser):
     allowed_time = timedelta(minutes=5)
-    for expense in db.query(Incomes).all():
+    for expense in db.query(Incomes).filter(Incomes.branch_id == thisuser.branch_id).all():
         if expense.time + allowed_time < datetime.now():
             db.query(Incomes).filter(Incomes.id == expense.id).update({
                 Incomes.updelstatus: False
             })
             db.commit()
-    incomes = db.query(Incomes).options(joinedload(Incomes.kassa),
-                                        joinedload(Incomes.user),
-                                        joinedload(Incomes.currency),
-                                        joinedload(Incomes.source_order),
-                                        joinedload(Incomes.source_loan))
+    incomes = db.query(Incomes).filter(Incomes.branch_id == thisuser.branch_id).options(joinedload(Incomes.kassa),
+                                                                                        joinedload(Incomes.user),
+                                                                                        joinedload(Incomes.currency),
+                                                                                        joinedload(Incomes.source_order),
+                                                                                        joinedload(Incomes.source_loan))
     search_format = "%{}%".format(search)
     search_filter = (Users.name.like(search_format)) | \
                     (Users.username.like(search_format)) | \
@@ -47,13 +47,13 @@ def all_incomes(search, page, limit, kassa_id, db):
 
 
 def create_income_e(form, db, thisuser):
-    get_in_db(db, Currencies, form.currency_id), get_in_db(db, Kassas, form.kassa_id)
-    if form.currency_id != get_in_db(db, Kassas, form.kassa_id).currency_id:
+    the_one(db, Currencies, form.currency_id, thisuser), the_one(db, Kassas, form.kassa_id, thisuser)
+    if form.currency_id != the_one(db, Kassas, form.kassa_id, thisuser).currency_id:
         raise HTTPException(status_code=400, detail="Incomega kiritilayotgan currency bilan income kiritilayotgan kassaning currencysi bir xil emas!")
     thisorder = db.query(Orders).filter(Orders.id == form.source_id).first()
     thisloan = db.query(Loans).filter(Loans.id == form.source_id).first()
     if thisorder and form.source == "order":
-        this_order = get_in_db(db, Orders, form.source_id)
+        this_order = the_one(db, Orders, form.source_id, thisuser)
         money = 0
         trades = db.query(Trades).filter(Trades.order_id == form.source_id).all()
         for trade in trades:
@@ -95,7 +95,8 @@ def create_income_e(form, db, thisuser):
                 user_id=thisuser.id,
                 kassa_id=form.kassa_id,
                 comment=form.comment,
-                updelstatus=True
+                updelstatus=True,
+                branch_id=thisuser.branch_id
             )
             save_in_db(db, new_income_db)
             new_loan_db = Loans(
@@ -105,7 +106,8 @@ def create_income_e(form, db, thisuser):
                 order_id=form.source_id,
                 return_date=0,
                 comment=0,
-                status=False
+                status=False,
+                branch_id=thisuser.branch_id
             )
             save_in_db(db, new_loan_db)
         elif total_money_income_currency == form.money:
@@ -118,7 +120,8 @@ def create_income_e(form, db, thisuser):
                 user_id=thisuser.id,
                 kassa_id=form.kassa_id,
                 comment=form.comment,
-                updelstatus=True
+                updelstatus=True,
+                branch_id=thisuser.branch_id
             )
             save_in_db(db, new_income_db)
         db.query(Kassas).filter(Kassas.id == form.kassa_id).update({
@@ -138,7 +141,8 @@ def create_income_e(form, db, thisuser):
                 user_id=thisuser.id,
                 kassa_id=form.kassa_id,
                 comment=form.comment,
-                updelstatus=True
+                updelstatus=True,
+                branch_id=thisuser.branch_id
             )
             save_in_db(db, new_income_db)
             db.query(Loans).filter(Loans.id == thisloan.id).update({
@@ -159,7 +163,8 @@ def create_income_e(form, db, thisuser):
                 user_id=thisuser.id,
                 kassa_id=form.kassa_id,
                 comment=form.comment,
-                updelstatus=True
+                updelstatus=True,
+                branch_id=thisuser.branch_id
             )
             save_in_db(db, new_income_db)
             db.query(Loans).filter(Loans.id == thisloan.id).update({
@@ -175,11 +180,10 @@ def create_income_e(form, db, thisuser):
         raise HTTPException(status_code=400, detail="source error!")
 
 
-def delete_income_e(id, db):
+def delete_income_e(id, db, user):
     allowed_time = timedelta(minutes=5)
-    if get_in_db(db, Incomes, id).time + allowed_time < datetime.now():
+    if the_one(db, Incomes, id, user).time + allowed_time < datetime.now():
         raise HTTPException(status_code=400, detail="Time is already up!")
-    get_in_db(db, Incomes, id)
     db.query(Incomes).filter(Incomes.id == id).delete()
     db.commit()
 

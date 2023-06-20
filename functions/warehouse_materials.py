@@ -5,13 +5,14 @@ from models.currencies import Currencies
 from models.materials import Materials
 from models.mechanisms import Mechanisms
 from models.warehouses import Warehouses
-from utils.db_operations import get_in_db
+from utils.db_operations import the_one
 from utils.pagination import pagination
 from models.warehouse_materials import Warehouse_materials
 
 
-def all_warehouse_materials(search, page, limit, inspection, db):
-    wms = db.query(Warehouse_materials).options(joinedload(Warehouse_materials.material),
+def all_warehouse_materials(search, page, limit, inspection, db, thisuser):
+    wms = db.query(Warehouse_materials).filter(Warehouse_materials.branch_id == thisuser.branch_id).\
+                                        options(joinedload(Warehouse_materials.material),
                                                 joinedload(Warehouse_materials.warehouse),
                                                 joinedload(Warehouse_materials.mechanism),
                                                 joinedload(Warehouse_materials.currency),
@@ -44,8 +45,8 @@ def all_warehouse_materials(search, page, limit, inspection, db):
     return pagination(wms, page, limit)
 
 
-def update_warehouse_materials_s(form, db):
-    get_in_db(db, Warehouse_materials, form.id), get_in_db(db, Cells, form.cell_id)
+def update_warehouse_materials_s(form, db, user):
+    the_one(db, Warehouse_materials, form.id, user), the_one(db, Cells, form.cell_id, user)
     db.query(Warehouse_materials).filter(Warehouse_materials.id == form.id).update({
         Warehouse_materials.cell_id: form.cell_id,
     })

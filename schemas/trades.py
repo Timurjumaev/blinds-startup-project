@@ -19,3 +19,25 @@ class UpdateTrade(BaseModel):
     status: str
     comment: str
     order_id: int
+
+
+class RequestMaterial(BaseModel):
+    material_id: int
+    width: float
+    height: float
+
+
+class CreateMaterial(BaseModel):
+    warehouse_materials_id: int
+    material_id: int
+    width: float
+    height: float
+
+
+class UpdateMaterial(BaseModel):
+    trade_id: int
+    warehouse_materials_id: int
+    material_id: int
+    width: float
+    height: float
+

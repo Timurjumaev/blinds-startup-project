@@ -16,10 +16,10 @@ class Prices(Base):
     height1 = Column(Numeric)
     height2 = Column(Numeric)
     collaction_id = Column(Integer)
-
+    branch_id = Column(Integer)
 
     collaction = relationship('Collactions', foreign_keys=[collaction_id],
-    primaryjoin=lambda: and_(Collactions.id == Prices.collaction_id))
+                              primaryjoin=lambda: and_(Collactions.id == Prices.collaction_id))
 
     currency = relationship('Currencies', foreign_keys=[currency_id],
-    primaryjoin=lambda: and_(Currencies.id == Prices.currency_id))
+                            primaryjoin=lambda: and_(Currencies.id == Prices.currency_id))
