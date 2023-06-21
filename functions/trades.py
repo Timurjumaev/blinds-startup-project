@@ -136,7 +136,7 @@ def request_materials_s(form, db, thisuser):
 
 def create_trade_material_s(form, db, thisuser):
     db.query(Warehouse_materials).filter(Warehouse_materials.branch_id == thisuser.branch_id,
-                                         Warehouse_materials.id == form.warehouse_material_id,
+                                         Warehouse_materials.id == form.warehouse_materials_id,
                                          Warehouse_materials.material_id == form.material_id).update({
         Warehouse_materials.width: Warehouse_materials.width - form.width,
         Warehouse_materials.height: Warehouse_materials.height - form.height
@@ -148,7 +148,7 @@ def create_trade_material_s(form, db, thisuser):
 def update_trade_material_s(form, db, thisuser):
     old_trade = the_one(db, Trades, form.trade_id, thisuser)
     db.query(Warehouse_materials).filter(Warehouse_materials.branch_id == thisuser.branch_id,
-                                         Warehouse_materials.id == form.warehouse_material_id,
+                                         Warehouse_materials.id == form.warehouse_materials_id,
                                          Warehouse_materials.material_id == form.material_id).update({
         Warehouse_materials.width: Warehouse_materials.width + old_trade.width - form.width,
         Warehouse_materials.height: Warehouse_materials.height + old_trade.height - form.height

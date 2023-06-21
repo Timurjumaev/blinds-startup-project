@@ -71,13 +71,5 @@ def update_user_r(form, db, thisuser):
         update_phone(phone_id, comment, number, form.id, thisuser.id, db, 'user')
 
 
-def user_of_token_n(token, db, user):
-    this_user = db.query(Users).filter(Users.token == token, Users.branch_id == user.branch_id).first()
-    if this_user:
-        return this_user
-    else:
-        raise HTTPException(status_code=400, detail="Bunday tokenli user mavjud emas!")
-
-
 
 
