@@ -127,11 +127,11 @@ def delete_trade_e(id, db, user):
 def request_materials_s(form, db, thisuser):
     this_material = db.query(Warehouse_materials).filter(Warehouse_materials.branch_id == thisuser.branch_id,
                                                          Warehouse_materials.material_id == form.material_id,
-                                                         Warehouse_materials.width > form.width,
-                                                         Warehouse_materials.height > form.height).all()
+                                                         Warehouse_materials.width >= form.width,
+                                                         Warehouse_materials.height >= form.height).all()
     if this_material:
         return this_material
-    raise HTTPException(status_code=400, detail="Bazada bunday o'lchamga mos material yo'q!")
+    raise HTTPException(status_code=400, detail="Omborda bunday o'lchamga mos material yo'q!")
 
 
 def create_trade_material_s(form, db, thisuser):

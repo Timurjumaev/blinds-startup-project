@@ -106,7 +106,7 @@ def update_supply_y(form, db, thisuser):
     if supply_verification is None:
         raise HTTPException(status_code=400, detail="Supply not found or this supply already added to warehouse materials!")
     the_one(db, Suppliers, form.supplier_id, thisuser), the_one(db, Currencies, form.currency_id, thisuser)
-    if (material and mechanism) or (form.mechanism_id == 0 and form.material_id == 0):
+    if (material and mechanism) or (material is None and mechanism is None):
         raise HTTPException(status_code=400, detail="You may input only Material or only Mechanism")
     supplier_filter = db.query(Supplier_balances).filter(Supplier_balances.supplier_id == form.supplier_id,
                                                          Supplier_balances.currency_id == form.currency_id)
@@ -132,10 +132,7 @@ def update_supply_y(form, db, thisuser):
             Supplier_balances.balance: supplier_balance.balance + (form.quantity * form.price),
         })
         db.commit()
-
-    if form.status == False:
-        user_id2 = 0
-    else:
+    if form.status:
         the_one(db, Warehouses, form.warehouse_id, thisuser), the_one(db, Cells, form.cell_id, thisuser)
         user_id2 = thisuser.id
         new_warehouse_materials_db = Warehouse_materials(
@@ -148,9 +145,11 @@ def update_supply_y(form, db, thisuser):
             currency_id=form.currency_id,
             warehouse_id=form.warehouse_id,
             cell_id=form.cell_id,
+            branch_id=thisuser.branch_id
         )
         save_in_db(db, new_warehouse_materials_db)
-
+    else:
+        user_id2 = 0
     db.query(Supplies).filter(Supplies.id == form.id).update({
         Supplies.material_id: form.material_id,
         Supplies.width: form.width,
