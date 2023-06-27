@@ -15,6 +15,7 @@ from routes.kassas import kassas_router
 from routes.loans import loans_router
 from routes.materials import materials_router
 from routes.mechanisms import mechanisms_router
+from routes.notifications import notifications_router
 from routes.orders import orders_router
 from routes.phones import phones_router
 from routes.prices import prices_router
@@ -64,6 +65,7 @@ app.include_router(trade_mechanisms_router)
 app.include_router(loans_router)
 app.include_router(files_router)
 app.include_router(branches_router)
+app.include_router(notifications_router)
 # app.include_router(refresh_router)
 
 

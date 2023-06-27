@@ -18,8 +18,7 @@ def create_kassa_a(form, db, thisuser):
     the_one(db, Currencies, form.currency_id, thisuser)
     new_kassa_db = Kassas(
         name=form.name,
-        comment=form.comment,
-        balance=form.balance,
+        balance=0,
         currency_id=form.currency_id,
         user_id=thisuser.id,
         branch_id=thisuser.branch_id
@@ -31,9 +30,6 @@ def update_kassa_a(form, db, thisuser):
     the_one(db, Kassas, form.id, thisuser), the_one(db, Currencies, form.currency_id, thisuser)
     db.query(Kassas).filter(Kassas.id == form.id).update({
         Kassas.name: form.name,
-        Kassas.comment: form.comment,
-        Kassas.balance: form.balance,
-        Kassas.currency_id: form.currency_id,
         Kassas.user_id: thisuser.id
     })
     db.commit()

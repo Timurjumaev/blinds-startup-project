@@ -1,11 +1,14 @@
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
+
+from functions.notifications import manager
 from models.currencies import Currencies
 from models.kassas import Kassas
 from models.supplier_balances import Supplier_balances
 from models.suppliers import Suppliers
 from models.users import Users
+from schemas.notifications import NotificationSchema
 from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.expenses import Expenses
@@ -44,8 +47,12 @@ def all_expenses(search, page, limit, kassa_id, db, thisuser):
 
 def create_expense_e(form, db, thisuser):
     the_one(db, Currencies, form.currency_id, thisuser), the_one(db, Kassas, form.kassa_id, thisuser)
-    if db.query(Kassas).filter(Kassas.id == form.kassa_id, Kassas.currency_id == form.currency_id).first() is None:
+    # users = db.query(Users).filter(Users.status, Users.role == "admin").all()
+    this_kassa = db.query(Kassas).filter(Kassas.id == form.kassa_id, Kassas.currency_id == form.currency_id).first()
+    if this_kassa is None:
         raise HTTPException(status_code=400, detail="Expencega kiritilayotgan currency bilan expence olinayotgan kassaning currencysi bir xil emas!")
+    if this_kassa.money < form.money:
+        raise HTTPException(status_code=400, detail="Kassada yetarli mablag' mavjud emas!")
     if db.query(Suppliers).filter(Suppliers.id == form.source_id).first() \
             and form.source == "supplier" and form.money > 0:
         new_expense_db = Expenses(
@@ -71,6 +78,15 @@ def create_expense_e(form, db, thisuser):
             supplier_balance.update({
                 Supplier_balances.balance: Supplier_balances.balance - form.money
             })
+            # for user in users:
+            #     data = NotificationSchema(
+            #         title="Yangi chiqim",
+            #         body=f"Hurmatli foydalanuvchi ID {form.kassa_id} kassadan ID {form.source_id} "
+            #              f"mijozning balansiga ID {form.currency_id} "
+            #              f"valyutada {form.money} miqdorda pul qo'shildi!",
+            #         user_id=user.id,
+            #     )
+            #     await manager.send_user(message=data, user_id=user.id, db=db)
         else:
             new_supplier_balance = Supplier_balances(
                 balance=-form.money,
@@ -79,6 +95,16 @@ def create_expense_e(form, db, thisuser):
                 branch_id=thisuser.branch_id
             )
             save_in_db(db, new_supplier_balance)
+            # for user in users:
+            #     data = NotificationSchema(
+            #         title="Yangi chiqim",
+            #         body=f"Hurmatli foydalanuvchi ID {form.kassa_id} kassadan ID {form.source_id} "
+            #              f"mijozning ID {form.currency_id} li "
+            #              f"balansi mavjud bo'lmagani sababli unga yangi ID {form.currency_id} li balans yaratildi va"
+            #              f"{form.money} miqdorda pul qo'shildi!",
+            #         user_id=user.id,
+            #     )
+            #     await manager.send_user(message=data, user_id=user.id, db=db)
     elif (db.query(Users).filter(Users.id == form.source_id).first() and form.source == "user" and form.money > 0)\
             or (form.source_id == 0 and form.source == "others" and form.money > 0):
         new_expense_db = Expenses(
@@ -98,16 +124,40 @@ def create_expense_e(form, db, thisuser):
             Kassas.balance: Kassas.balance - form.money
         })
         db.commit()
+        # if form.source_id == 0:
+        #     for user in users:
+        #         data = NotificationSchema(
+        #             title="Yangi chiqim",
+        #             body=f"Hurmatli foydalanuvchi ID {form.kassa_id} kassadan ID {form.currency_id} "
+        #                  f"valyutada {form.money} miqdorda chiqim bo'ldi",
+        #             user_id=user.id,
+        #         )
+        #         await manager.send_user(message=data, user_id=user.id, db=db)
+        # else:
+        #     for user in users:
+        #         data = NotificationSchema(
+        #             title="Yangi chiqim",
+        #             body=f"Hurmatli foydalanuvchi ID {form.kassa_id} kassadan ID {form.source_id} userga "
+        #                  f"ID {form.currency_id}"
+        #                  f"valyutada {form.money} miqdorda pul berildi",
+        #             user_id=user.id,
+        #         )
+        #         await manager.send_user(message=data, user_id=user.id, db=db)
     else:
         raise HTTPException(status_code=400, detail="source error or money <=0")
 
 
 def delete_expense_e(id, db, user):
     allowed_time = timedelta(minutes=5)
-    if the_one(db, Expenses, id, user).time + allowed_time < datetime.now():
+    this_expense = the_one(db, Expenses, id, user)
+    if this_expense.time + allowed_time < datetime.now():
         raise HTTPException(status_code=400, detail="Time is already up!")
     db.query(Expenses).filter(Expenses.id == id).delete()
+    db.query(Kassas).filter(Kassas.id == this_expense.kassa_id).update({
+        Kassas.balance: Kassas.balance + this_expense.money
+    })
     db.commit()
+
 
 
 

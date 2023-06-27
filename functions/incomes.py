@@ -182,9 +182,13 @@ def create_income_e(form, db, thisuser):
 
 def delete_income_e(id, db, user):
     allowed_time = timedelta(minutes=5)
-    if the_one(db, Incomes, id, user).time + allowed_time < datetime.now():
+    this_income = the_one(db, Incomes, id, user)
+    if this_income.time + allowed_time < datetime.now():
         raise HTTPException(status_code=400, detail="Time is already up!")
     db.query(Incomes).filter(Incomes.id == id).delete()
+    db.query(Kassas).filter(Kassas.id == this_income.kassa_id).update({
+        Kassas.balance: Kassas.balance - this_income.money
+    })
     db.commit()
 
 

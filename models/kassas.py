@@ -11,7 +11,6 @@ class Kassas(Base):
     __tablename__ = "kassas"
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String(999))
-    comment = Column(String(999))
     balance = Column(Numeric)
     currency_id = Column(Integer)
     user_id = Column(Integer)
