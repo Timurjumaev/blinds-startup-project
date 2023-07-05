@@ -1,6 +1,5 @@
 import inspect
-
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from functions.materials import create_material_l, update_material_l, all_materials
 from models.materials import Materials
@@ -30,10 +29,10 @@ def get_materials(search: str = None, id: int = 0, page: int = 0, limit: int = 2
 
 
 @materials_router.post("/create_material")
-def create_material(new_material: CreateMaterial, db: Session = Depends(database),
-                    current_user: CreateUser = Depends(get_current_active_user)):
+def create_material(name: str, comment: str, collaction_id: int, db: Session = Depends(database),
+                    current_user: CreateUser = Depends(get_current_active_user), file: UploadFile = File(None)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    create_material_l(new_material, db, current_user)
+    create_material_l(name, comment, collaction_id, db, current_user, file)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

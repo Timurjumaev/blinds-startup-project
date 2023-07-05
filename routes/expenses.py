@@ -29,10 +29,10 @@ def get_expenses(search: str = None, id: int = 0, page: int = 0, limit: int = 25
 
 
 @expenses_router.post("/create_expense")
-def create_expense(new_expense: CreateExpense, db: Session = Depends(database),
-                   current_user: CreateUser = Depends(get_current_active_user)):
+async def create_expense(new_expense: CreateExpense, db: Session = Depends(database),
+                         current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    create_expense_e(new_expense, db, current_user)
+    await create_expense_e(new_expense, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

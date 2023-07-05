@@ -27,7 +27,7 @@ def create_kassa_a(form, db, thisuser):
 
 
 def update_kassa_a(form, db, thisuser):
-    the_one(db, Kassas, form.id, thisuser), the_one(db, Currencies, form.currency_id, thisuser)
+    the_one(db, Kassas, form.id, thisuser)
     db.query(Kassas).filter(Kassas.id == form.id).update({
         Kassas.name: form.name,
         Kassas.user_id: thisuser.id

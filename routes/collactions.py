@@ -1,6 +1,5 @@
 import inspect
-
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from functions.collactions import create_collaction_n, update_collaction_n, all_collactions
 from models.collactions import Collactions
@@ -30,10 +29,11 @@ def get_collactions(search: str = None, id: int = 0, page: int = 0, limit: int =
 
 
 @collactions_router.post("/create_collaction")
-def create_collaction(new_collaction: CreateCollaction, db: Session = Depends(database),
-                      current_user: CreateUser = Depends(get_current_active_user)):
+def create_collaction(name: str, category_id: int,  db: Session = Depends(database),
+                      current_user: CreateUser = Depends(get_current_active_user),
+                      file: UploadFile = File(None)):
     if role_verification(current_user, inspect.currentframe().f_code.co_name):
-        create_collaction_n(new_collaction, db, current_user)
+        create_collaction_n(name, category_id, db, current_user, file)
         raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

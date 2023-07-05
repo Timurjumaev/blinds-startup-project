@@ -1,6 +1,5 @@
 import inspect
-
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from functions.mechanisms import create_mechanism_m, update_mechanism_m, all_mechanisms
 from models.mechanisms import Mechanisms
@@ -29,10 +28,12 @@ def get_mechanisms(search: str = None, id: int = 0, page: int = 0, limit: int = 
 
 
 @mechanisms_router.post("/create_mechanism")
-def create_mechanism(new_mechanism: CreateMechanism, db: Session = Depends(database),
-                     current_user: CreateUser = Depends(get_current_active_user)):
+def create_mechanism(name: str, comment: str, collaction_id: int, olchov: str,
+                     db: Session = Depends(database),
+                     current_user: CreateUser = Depends(get_current_active_user),
+                     file: UploadFile = File(None)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    create_mechanism_m(new_mechanism, db, current_user)
+    create_mechanism_m(name, comment, collaction_id, olchov, db, current_user, file)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 
