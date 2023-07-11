@@ -28,10 +28,10 @@ def get_incomes(search: str = None, id: int = 0, page: int = 0, limit: int = 25,
 
 
 @incomes_router.post("/create_income")
-def create_income(new_income: CreateIncome, db: Session = Depends(database),
+async def create_income(new_income: CreateIncome, db: Session = Depends(database),
                   current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    create_income_e(new_income, db, current_user)
+    await create_income_e(new_income, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

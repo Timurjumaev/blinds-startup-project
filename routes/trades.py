@@ -30,18 +30,18 @@ def get_trades(search: str = None, id: int = 0, page: int = 0,
 
 
 @trades_router.post("/create_trade")
-def create_trade(new_trade: CreateTrade, db: Session = Depends(database),
+async def create_trade(new_trade: CreateTrade, db: Session = Depends(database),
                  current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    create_trade_e(new_trade, db, current_user)
+    await create_trade_e(new_trade, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 
 @trades_router.put("/update_trade")
-def update_trade(this_trade: UpdateTrade, db: Session = Depends(database),
+async def update_trade(this_trade: UpdateTrade, db: Session = Depends(database),
                  current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    update_trade_e(this_trade, db, current_user)
+    await update_trade_e(this_trade, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

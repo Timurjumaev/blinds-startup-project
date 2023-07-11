@@ -1,11 +1,8 @@
 import inspect
-
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from functions.warehouses import all_warehouses, create_warehouse_e, update_warehouse_e
-from models.warehouses import Warehouses
+from functions.warehouses import all_warehouses, create_warehouse_e, update_warehouse_e, one_warehouse
 from utils.login import get_current_active_user
-from utils.db_operations import the_one
 from schemas.warehouses import CreateWarehouse, UpdateWarehouse
 from schemas.users import CreateUser
 from db import database
@@ -24,7 +21,7 @@ def get_warehouses(search: str = None, id: int = 0, page: int = 0, limit: int = 
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return the_one(db, Warehouses, id, current_user)
+        return one_warehouse(db, current_user, id)
     return all_warehouses(search, page, limit, db, current_user)
 
 

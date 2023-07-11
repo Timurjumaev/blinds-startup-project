@@ -16,6 +16,14 @@ def all_customers(search, page, limit, db, user):
     return pagination(customers, page, limit)
 
 
+def one_customer(db, user, ident):
+    the_customer = db.query(Customers).filter(Customers.branch_id == user.branch_id,
+                                              Customers.id == ident).options(joinedload(Customers.phones)).first()
+    if the_customer is None:
+        raise HTTPException(status_code=404)
+    return the_customer
+
+
 def create_customer_r(form, db, thisuser):
     if form.type != "block_list" and form.type != "general" and form.type != "premium":
         raise HTTPException(status_code=400, detail="Customers.type is error!")

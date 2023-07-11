@@ -47,7 +47,7 @@ def all_expenses(search, page, limit, kassa_id, db, thisuser):
 
 async def create_expense_e(form, db, thisuser):
     the_one(db, Currencies, form.currency_id, thisuser), the_one(db, Kassas, form.kassa_id, thisuser)
-    users = db.query(Users).filter(Users.status, Users.role == "admin").all()
+    users = db.query(Users).filter(Users.status, Users.branch_id == thisuser.branch_id, Users.role == "admin").all()
     this_kassa = db.query(Kassas).filter(Kassas.id == form.kassa_id, Kassas.currency_id == form.currency_id).first()
     if this_kassa is None:
         raise HTTPException(status_code=400, detail="Expencega kiritilayotgan currency bilan expence olinayotgan kassaning currencysi bir xil emas!")
@@ -68,6 +68,14 @@ async def create_expense_e(form, db, thisuser):
             branch_id=thisuser.branch_id,
         )
         save_in_db(db, new_expense_db)
+        this_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
+        for user in users:
+            data = NotificationSchema(
+                title="Yangi chiqim!",
+                body=f"Hurmatli foydalanuvchi {form.money} {this_currency.currency} miqdorda chiqim bo'ldi!",
+                user_id=user.id,
+            )
+            await manager.send_user(message=data, user_id=user.id, db=db)
         db.query(Kassas).filter(Kassas.id == form.kassa_id).update({
             Kassas.balance: Kassas.balance - form.money
         })
@@ -78,15 +86,6 @@ async def create_expense_e(form, db, thisuser):
             supplier_balance.update({
                 Supplier_balances.balance: Supplier_balances.balance - form.money
             })
-            for user in users:
-                data = NotificationSchema(
-                    title="Yangi chiqim",
-                    body=f"Hurmatli foydalanuvchi ID {form.kassa_id} kassadan ID {form.source_id} "
-                         f"mijozning balansiga ID {form.currency_id} "
-                         f"valyutada {form.money} miqdorda pul qo'shildi!",
-                    user_id=user.id,
-                )
-                await manager.send_user(message=data, user_id=user.id, db=db)
         else:
             new_supplier_balance = Supplier_balances(
                 balance=-form.money,
@@ -95,16 +94,6 @@ async def create_expense_e(form, db, thisuser):
                 branch_id=thisuser.branch_id
             )
             save_in_db(db, new_supplier_balance)
-            for user in users:
-                data = NotificationSchema(
-                    title="Yangi chiqim",
-                    body=f"Hurmatli foydalanuvchi ID {form.kassa_id} kassadan ID {form.source_id} "
-                         f"mijozning ID {form.currency_id} li "
-                         f"balansi mavjud bo'lmagani sababli unga yangi ID {form.currency_id} li balans yaratildi va"
-                         f"{form.money} miqdorda pul qo'shildi!",
-                    user_id=user.id,
-                )
-                await manager.send_user(message=data, user_id=user.id, db=db)
     elif (db.query(Users).filter(Users.id == form.source_id).first() and form.source == "user" and form.money > 0)\
             or (form.source_id == 0 and form.source == "others" and form.money > 0):
         new_expense_db = Expenses(
@@ -120,29 +109,18 @@ async def create_expense_e(form, db, thisuser):
             branch_id=thisuser.branch_id
         )
         save_in_db(db, new_expense_db)
+        this_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
+        for user in users:
+            data = NotificationSchema(
+                title="Yangi chiqim!",
+                body=f"Hurmatli foydalanuvchi {form.money} {this_currency.currency} miqdorda chiqim bo'ldi!",
+                user_id=user.id,
+            )
+            await manager.send_user(message=data, user_id=user.id, db=db)
         db.query(Kassas).filter(Kassas.id == form.kassa_id).update({
             Kassas.balance: Kassas.balance - form.money
         })
         db.commit()
-        if form.source_id == 0:
-            for user in users:
-                data = NotificationSchema(
-                    title="Yangi chiqim",
-                    body=f"Hurmatli foydalanuvchi ID {form.kassa_id} kassadan ID {form.currency_id} "
-                         f"valyutada {form.money} miqdorda chiqim bo'ldi",
-                    user_id=user.id,
-                )
-                await manager.send_user(message=data, user_id=user.id, db=db)
-        else:
-            for user in users:
-                data = NotificationSchema(
-                    title="Yangi chiqim",
-                    body=f"Hurmatli foydalanuvchi ID {form.kassa_id} kassadan ID {form.source_id} userga "
-                         f"ID {form.currency_id}"
-                         f"valyutada {form.money} miqdorda pul berildi",
-                    user_id=user.id,
-                )
-                await manager.send_user(message=data, user_id=user.id, db=db)
     else:
         raise HTTPException(status_code=400, detail="source error or money <=0")
 

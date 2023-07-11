@@ -1,11 +1,9 @@
 import inspect
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from functions.users import create_user_r, all_users, update_user_r
-from models.users import Users
-from utils.db_operations import the_one
+from functions.users import create_user_r, all_users, update_user_r, one_user, create_branch_user_r
 from utils.login import get_current_active_user
-from schemas.users import CreateUser, UpdateUser
+from schemas.users import CreateUser, UpdateUser, CreateBranchUser
 from db import database
 from utils.role_verification import role_verification
 
@@ -23,7 +21,7 @@ def get_users(search: str = None, id: int = 0, page: int = 0, limit: int = 25, s
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return the_one(db, Users, id, current_user)
+        return one_user(db, current_user, id)
     return all_users(search, page, limit, status, db, current_user)
 
 
@@ -32,6 +30,14 @@ def create_user(new_user: CreateUser, db: Session = Depends(database),
                 current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     create_user_r(new_user, db, current_user)
+    raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
+
+
+@users_router.post("/create_branch_user")
+def create_branch_user(new_user: CreateBranchUser, db: Session = Depends(database),
+                       current_user: CreateUser = Depends(get_current_active_user)):
+    role_verification(current_user, inspect.currentframe().f_code.co_name)
+    create_branch_user_r(new_user, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

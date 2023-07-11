@@ -16,6 +16,13 @@ def all_branches(search, page, limit, db):
     return pagination(warehouses, page, limit)
 
 
+def one_branch(db, ident):
+    the_branch = db.query(Branches).filter(Branches.id == ident).options(joinedload(Branches.phones)).first()
+    if the_branch is None:
+        raise HTTPException(status_code=404)
+    return the_branch
+
+
 def create_branch_ch(form, db, thisuser):
     new_branch_db = Branches(
         name=form.name,

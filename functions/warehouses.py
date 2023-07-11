@@ -17,6 +17,14 @@ def all_warehouses(search, page, limit, db, thisuser):
     return pagination(warehouses, page, limit)
 
 
+def one_warehouse(db, user, ident):
+    the_warehouse = db.query(Warehouses).filter(Warehouses.branch_id == user.branch_id,
+                                                Warehouses.id == ident).options(joinedload(Warehouses.phones)).first()
+    if the_warehouse is None:
+        raise HTTPException(status_code=404)
+    return the_warehouse
+
+
 def create_warehouse_e(form, db, thisuser):
     new_warehouse_db = Warehouses(
         name=form.name,

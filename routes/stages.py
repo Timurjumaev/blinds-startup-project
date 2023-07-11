@@ -18,7 +18,8 @@ stages_router = APIRouter(
 @stages_router.get("/get_stages")
 def get_stages(db: Session = Depends(database), current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    return db.query(Stages).filter(Stages.branch_id == current_user.branch_id).options(joinedload(Stages.category)).all()
+    return db.query(Stages).filter(Stages.branch_id == current_user.branch_id).options(joinedload(Stages.category))\
+        .order_by(Stages.id).all()
 
 
 @stages_router.post("/create_stage")

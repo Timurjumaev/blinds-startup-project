@@ -1,11 +1,8 @@
 import inspect
-
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from functions.customers import all_customers, create_customer_r, update_customer_r
-from models.customers import Customers
+from functions.customers import all_customers, create_customer_r, update_customer_r, one_customer
 from utils.login import get_current_active_user
-from utils.db_operations import the_one
 from schemas.customers import CreateCustomer, UpdateCustomer
 from schemas.users import CreateUser
 from db import database
@@ -24,7 +21,7 @@ def get_customers(search: str = None, id: int = 0, page: int = 0, limit: int = 2
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return the_one(db, Customers, id, current_user)
+        return one_customer(db, current_user, id)
     return all_customers(search, page, limit, db, current_user)
 
 

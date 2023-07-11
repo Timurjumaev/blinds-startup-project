@@ -1,10 +1,8 @@
 import inspect
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from functions.suppliers import create_supplier_r, update_supplier_r, all_suppliers
-from models.suppliers import Suppliers
+from functions.suppliers import create_supplier_r, update_supplier_r, all_suppliers, one_supplier
 from utils.login import get_current_active_user
-from utils.db_operations import the_one
 from schemas.suppliers import CreateSupplier, UpdateSupplier
 from schemas.users import CreateUser
 from db import database
@@ -23,7 +21,7 @@ def get_suppliers(search: str = None, id: int = 0, page: int = 0, limit: int = 2
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return the_one(db, Suppliers, id, current_user)
+        return one_supplier(db, current_user, id)
     return all_suppliers(search, page, limit, db, current_user)
 
 

@@ -14,6 +14,16 @@ class CreateUser(BaseModel):
     phones: List[CreatePhone]
 
 
+class CreateBranchUser(BaseModel):
+    name: str
+    username: str
+    password: str
+    role: str
+    status: bool
+    branch_id: int
+    phones: List[CreatePhone]
+
+
 class UpdateUser(BaseModel):
     id: int
     name: str

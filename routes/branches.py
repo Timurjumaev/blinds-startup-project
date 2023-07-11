@@ -1,7 +1,7 @@
 import inspect
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from functions.branches import all_branches, create_branch_ch, update_branch_ch
+from functions.branches import all_branches, create_branch_ch, update_branch_ch, one_branch
 from models.branches import Branches
 from utils.login import get_current_active_user
 from utils.db_operations import get_in_db
@@ -23,7 +23,7 @@ def get_branches(search: str = None, id: int = 0, page: int = 0, limit: int = 25
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return get_in_db(db, Branches, id)
+        return one_branch(db, id)
     return all_branches(search, page, limit, db)
 
 

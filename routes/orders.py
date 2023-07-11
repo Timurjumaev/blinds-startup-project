@@ -34,10 +34,10 @@ def create_order(new_order: CreateOrder, db: Session = Depends(database),
 
 
 @orders_router.put("/update_order")
-def update_order(this_order: UpdateOrder, db: Session = Depends(database),
-                 current_user: CreateUser = Depends(get_current_active_user)):
+async def update_order(this_order: UpdateOrder, db: Session = Depends(database),
+                       current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    update_order_r(this_order, db, current_user)
+    await update_order_r(this_order, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

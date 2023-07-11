@@ -18,6 +18,14 @@ def all_suppliers(search, page, limit, db, thisuser):
     return pagination(suppliers, page, limit)
 
 
+def one_supplier(db, user, ident):
+    the_supplier = db.query(Suppliers).filter(Suppliers.branch_id == user.branch_id,
+                                              Suppliers.id == ident).options(joinedload(Suppliers.phones)).first()
+    if the_supplier is None:
+        raise HTTPException(status_code=404)
+    return the_supplier
+
+
 def create_supplier_r(form, db, thisuser):
     new_supplier_db = Suppliers(
         name=form.name,

@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
+
+from functions.notifications import manager
 from models.collactions import Collactions
 from models.currencies import Currencies
 from models.customers import Customers
@@ -12,6 +14,7 @@ from models.orders import Orders
 from models.prices import Prices
 from models.trades import Trades
 from models.users import Users
+from schemas.notifications import NotificationSchema
 from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.incomes import Incomes
@@ -46,8 +49,9 @@ def all_incomes(search, page, limit, kassa_id, db, thisuser):
     return pagination(incomes, page, limit)
 
 
-def create_income_e(form, db, thisuser):
+async def create_income_e(form, db, thisuser):
     the_one(db, Currencies, form.currency_id, thisuser), the_one(db, Kassas, form.kassa_id, thisuser)
+    users = db.query(Users).filter(Users.status, Users.branch_id == thisuser.branch_id, Users.role == "admin").all()
     if form.currency_id != the_one(db, Kassas, form.kassa_id, thisuser).currency_id:
         raise HTTPException(status_code=400, detail="Incomega kiritilayotgan currency bilan income kiritilayotgan kassaning currencysi bir xil emas!")
     thisorder = db.query(Orders).filter(Orders.id == form.source_id).first()
@@ -84,7 +88,7 @@ def create_income_e(form, db, thisuser):
                 db.query(Incomes).filter(Incomes.source_id == form.source_id, Incomes.source == "order").first():
             raise HTTPException(status_code=400,
                                 detail="Kiritilayotgan summa ushbu buyurtmaning narxidan katta yoki manfiy yoki"
-                                       "ushbu buyurtmaga tegishli income allaqachon mavjud!")
+                                       "ushbu buyurtmaga tegishli kirim allaqachon mavjud!")
         elif total_money_income_currency > form.money:
             new_income_db = Incomes(
                 money=form.money,
@@ -99,6 +103,14 @@ def create_income_e(form, db, thisuser):
                 branch_id=thisuser.branch_id
             )
             save_in_db(db, new_income_db)
+            this_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
+            for user in users:
+                data = NotificationSchema(
+                    title="Yangi kirim!",
+                    body=f"Hurmatli foydalanuvchi {form.money} {this_currency.currency} miqdorda kirim bo'ldi!",
+                    user_id=user.id,
+                )
+                await manager.send_user(message=data, user_id=user.id, db=db)
             new_loan_db = Loans(
                 money=total_money_income_currency - form.money,
                 currency_id=form.currency_id,
@@ -124,6 +136,14 @@ def create_income_e(form, db, thisuser):
                 branch_id=thisuser.branch_id
             )
             save_in_db(db, new_income_db)
+            this_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
+            for user in users:
+                data = NotificationSchema(
+                    title="Yangi kirim!",
+                    body=f"Hurmatli foydalanuvchi {form.money} {this_currency.currency} miqdorda kirim bo'ldi!",
+                    user_id=user.id,
+                )
+                await manager.send_user(message=data, user_id=user.id, db=db)
         db.query(Kassas).filter(Kassas.id == form.kassa_id).update({
             Kassas.balance: Kassas.balance + form.money
         })
@@ -145,6 +165,14 @@ def create_income_e(form, db, thisuser):
                 branch_id=thisuser.branch_id
             )
             save_in_db(db, new_income_db)
+            this_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
+            for user in users:
+                data = NotificationSchema(
+                    title="Yangi kirim!",
+                    body=f"Hurmatli foydalanuvchi {form.money} {this_currency.currency} miqdorda kirim bo'ldi!",
+                    user_id=user.id,
+                )
+                await manager.send_user(message=data, user_id=user.id, db=db)
             db.query(Loans).filter(Loans.id == thisloan.id).update({
                 Loans.residual: Loans.residual - form.money
             })
@@ -167,6 +195,14 @@ def create_income_e(form, db, thisuser):
                 branch_id=thisuser.branch_id
             )
             save_in_db(db, new_income_db)
+            this_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
+            for user in users:
+                data = NotificationSchema(
+                    title="Yangi kirim!",
+                    body=f"Hurmatli foydalanuvchi {form.money} {this_currency.currency} miqdorda kirim bo'ldi!",
+                    user_id=user.id,
+                )
+                await manager.send_user(message=data, user_id=user.id, db=db)
             db.query(Loans).filter(Loans.id == thisloan.id).update({
                 Loans.residual: Loans.residual - form.money,
                 Loans.status: True

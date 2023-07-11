@@ -1,13 +1,17 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
+
+from functions.notifications import manager
 from models.materials import Materials
 from models.mechanisms import Mechanisms
 from models.orders import Orders
+from models.stage_users import Stage_users
 from models.stages import Stages
 from models.standart_mechanisms import Standart_mechanisms
 from models.trade_mechanisms import Trade_mechanisms
 from models.users import Users
 from models.warehouse_materials import Warehouse_materials
+from schemas.notifications import NotificationSchema
 from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.trades import Trades
@@ -38,7 +42,7 @@ def all_trades(search, page, limit, order_id, stage_id, db, thisuser):
     return pagination(trades, page, limit)
 
 
-def create_trade_e(form, db, thisuser):
+async def create_trade_e(form, db, thisuser):
     the_one(db, Materials, form.material_id, thisuser), the_one(db, Stages, form.stage_id, thisuser), \
         the_one(db, Orders, form.order_id, thisuser)
     this_order = db.query(Orders).filter(Orders.id == form.order_id).first()
@@ -56,6 +60,17 @@ def create_trade_e(form, db, thisuser):
         branch_id=thisuser.branch_id
     )
     save_in_db(db, new_trade_db)
+    stage = db.query(Stages).filter(Stages.id == form.stage_id).first()
+    stage_users = db.query(Stage_users).filter(Stage_users.stage_id == form.stage_id,
+                                               Stage_users.branch_id == thisuser.branch_id).all()
+    for stage_user in stage_users:
+        user = db.query(Users).filter(Users.id == stage_user.user_id).first()
+        data = NotificationSchema(
+            title="Yangi ish!",
+            body=f"Hurmatli foydalanuvchi {stage.name} bosqichiga yangi ish keldi!",
+            user_id=user.id,
+        )
+        await manager.send_user(message=data, user_id=user.id, db=db)
     material = the_one(db, Materials, form.material_id, thisuser)
     mechanisms_in_current_collaction = db.query(Mechanisms).filter(Mechanisms.collaction_id == material.collaction_id).all()
     for mechanism in mechanisms_in_current_collaction:
@@ -74,7 +89,7 @@ def create_trade_e(form, db, thisuser):
             db.commit()
 
 
-def update_trade_e(form, db, thisuser):
+async def update_trade_e(form, db, thisuser):
     the_one(db, Trades, form.id, thisuser), the_one(db, Materials, form.material_id, thisuser), \
         the_one(db, Stages, form.stage_id, thisuser), the_one(db, Orders, form.order_id, thisuser)
     if db.query(Trades).filter(Trades.id == form.id).first().status == "done":
@@ -95,6 +110,17 @@ def update_trade_e(form, db, thisuser):
         Trades.order_id: form.order_id
     })
     db.commit()
+    stage = db.query(Stages).filter(Stages.id == form.stage_id).first()
+    stage_users = db.query(Stage_users).filter(Stage_users.stage_id == form.stage_id,
+                                               Stage_users.branch_id == thisuser.branch_id).all()
+    for stage_user in stage_users:
+        user = db.query(Users).filter(Users.id == stage_user.user_id).first()
+        data = NotificationSchema(
+            title="Yangi ish!",
+            body=f"Hurmatli foydalanuvchi {stage.name} bosqichiga yangi ish keldi!",
+            user_id=user.id,
+        )
+        await manager.send_user(message=data, user_id=user.id, db=db)
     if db.query(Trade_mechanisms).filter(Trade_mechanisms.trade_id == form.id).first():
         db.query(Trade_mechanisms).filter(Trade_mechanisms.trade_id == form.id).delete()
         db.commit()

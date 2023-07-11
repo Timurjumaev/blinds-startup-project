@@ -1,6 +1,7 @@
 from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
+from functions.notifications import manager
 from models.collactions import Collactions
 from models.currencies import Currencies
 from models.customers import Customers
@@ -10,6 +11,7 @@ from models.materials import Materials
 from models.prices import Prices
 from models.trades import Trades
 from models.users import Users
+from schemas.notifications import NotificationSchema
 from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.orders import Orders
@@ -82,8 +84,9 @@ def create_order_r(form, db, thisuser):
     save_in_db(db, new_order_db)
 
 
-def update_order_r(form, db, thisuser):
+async def update_order_r(form, db, thisuser):
     the_one(db, Orders, form.id, thisuser), the_one(db, Customers, form.customer_id, thisuser)
+    users = db.query(Users).filter(Users.status, Users.branch_id == thisuser.branch_id, Users.role == "admin").all()
     if db.query(Orders).filter(Orders.id == form.id).first().status == "done":
         raise HTTPException(status_code=400, detail="This Orders.status is already 'done'!")
     if db.query(Orders).filter(Orders.id == form.id).first().status == "false" and form.status != "false" and form.status != "true":
@@ -98,6 +101,23 @@ def update_order_r(form, db, thisuser):
         Orders.delivery_date: form.delivery_date
     })
     db.commit()
+    this_customer = db.query(Customers).filter(Customers.id == form.customer_id).first()
+    if form.status == "true":
+        for user in users:
+            data = NotificationSchema(
+                title="Yangi buyurtma!",
+                body=f"Hurmatli foydalanuvchi {this_customer.name} ismli mijozdan buyurtma olindi!",
+                user_id=user.id,
+            )
+            await manager.send_user(message=data, user_id=user.id, db=db)
+    if form.status == "done":
+        for user in users:
+            data = NotificationSchema(
+                title="Yakunlangan buyurtma!",
+                body=f"Hurmatli foydalanuvchi {this_customer.name} ismli mijozning buyurtmasi yakunlandi!",
+                user_id=user.id,
+            )
+            await manager.send_user(message=data, user_id=user.id, db=db)
 
 
 def delete_order_r(id, db, user):

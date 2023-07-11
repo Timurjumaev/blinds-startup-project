@@ -1,6 +1,7 @@
 from sqlalchemy.orm import relationship
 from db import Base
 from sqlalchemy import *
+from models.currencies import Currencies
 from models.users import Users
 from models.stages import Stages
 
@@ -10,6 +11,7 @@ class Stage_users(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     user_id = Column(Integer)
     kpi = Column(Numeric)
+    currency_id = Column(Integer)
     stage_id = Column(Integer)
     branch_id = Column(Integer)
 
@@ -18,3 +20,6 @@ class Stage_users(Base):
 
     stage = relationship('Stages', foreign_keys=[stage_id],
                          primaryjoin=lambda: and_(Stages.id == Stage_users.stage_id))
+
+    currency = relationship('Currencies', foreign_keys=[currency_id],
+                            primaryjoin=lambda: and_(Currencies.id == Stage_users.currency_id))
