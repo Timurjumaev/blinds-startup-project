@@ -41,7 +41,7 @@ def create_customer_r(form, db, thisuser):
 
 
 def update_customer_r(form, db, thisuser):
-    the_one(db, Customers, form.id, thisuser), the_one(db, Phones, form.phones[0].id, thisuser)
+    the_one(db, Customers, form.id, thisuser)
     if form.type != "block_list" and form.type != "general" and form.type != "premium":
         raise HTTPException(status_code=400, detail="Customers.type error!")
 

@@ -78,7 +78,7 @@ def create_branch_user_r(form, db, thisuser):
 
 
 def update_user_r(form, db, thisuser):
-    the_one(db, Users, form.id, thisuser), the_one(db, Phones, form.phones[0].id, thisuser)
+    the_one(db, Users, form.id, thisuser)
     if form.role != "admin" and form.role != "worker" and form.role != "warehouseman" \
             and form.role != "crudadmin" and form.role != "crudoperator":
         raise HTTPException(status_code=400, detail="Role error!")

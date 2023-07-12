@@ -17,9 +17,17 @@ from utils.pagination import pagination
 from models.orders import Orders
 
 
-def all_orders(search, page, limit, customer_id, db, thisuser):
+def all_orders(search, page, limit, customer_id, db, thisuser, archive):
     orders = db.query(Orders).filter(Orders.branch_id == thisuser.branch_id).options(joinedload(Orders.customer),
                                                                                      joinedload(Orders.user))
+    if archive == "yes":
+        orders = orders.filter(Orders.status == "done")
+    elif archive == "no":
+        orders = orders.filter(Orders.status != "done")
+    elif archive is None:
+        orders = orders
+    else:
+        raise HTTPException(status_code=400, detail="Bor yoqal!!!")
     search_formatted = "%{}%".format(search)
     search_filter = Users.name.like(search_formatted) | \
                     Users.username.like(search_formatted) | \

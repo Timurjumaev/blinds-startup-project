@@ -42,7 +42,7 @@ def create_supplier_r(form, db, thisuser):
 
 
 def update_supplier_r(form, db, thisuser):
-    the_one(db, Suppliers, form.id, thisuser), the_one(db, Phones, form.phones[0].id, thisuser)
+    the_one(db, Suppliers, form.id, thisuser)
     db.query(Suppliers).filter(Suppliers.id == form.id).update({
         Suppliers.name: form.name,
         Suppliers.address: form.address,

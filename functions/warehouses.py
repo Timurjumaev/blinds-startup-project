@@ -41,7 +41,7 @@ def create_warehouse_e(form, db, thisuser):
 
 
 def update_warehouse_e(form, db, thisuser):
-    the_one(db, Warehouses, form.id, thisuser), the_one(db, Phones, form.phones[0].id, thisuser)
+    the_one(db, Warehouses, form.id, thisuser)
     db.query(Warehouses).filter(Warehouses.id == form.id).update({
         Warehouses.name: form.name,
         Warehouses.address: form.address,

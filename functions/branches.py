@@ -38,8 +38,7 @@ def create_branch_ch(form, db, thisuser):
 
 
 def update_branch_ch(form, db, thisuser):
-    if get_in_db(db, Branches, form.id) is None\
-            or get_in_db(db, Phones, form.phones[0].id) is None:
+    if get_in_db(db, Branches, form.id) is None:
         raise HTTPException(status_code=400, detail="Branch or Phone not found!")
 
     db.query(Branches).filter(Branches.id == form.id).update({
