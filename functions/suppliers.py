@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
 
-from functions.phones import create_phone, update_phone
+from functions.phones import create_phone
 from models.phones import Phones
 from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
@@ -50,12 +50,14 @@ def update_supplier_r(form, db, thisuser):
         Suppliers.map_lat: form.map_lat
     })
     db.commit()
-
+    phones = db.query(Phones).filter(Phones.source == "supplier", Phones.source_id == form.id).all()
+    for phone in phones:
+        db.query(Phones).filter(Phones.id == phone.id).delete()
+        db.commit()
     for i in form.phones:
-        phone_id = i.id
         comment = i.comment
         number = i.number
-        update_phone(phone_id, comment, number, form.id, thisuser.id, db, 'supplier')
+        create_phone(comment, number, form.id, thisuser.id, db, 'supplier', thisuser.branch_id)
 
 
 

@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from schemas.phones import CreatePhone, UpdatePhone
+from schemas.phones import CreatePhone
 
 
 class CreateBranch(BaseModel):
@@ -19,4 +19,4 @@ class UpdateBranch(BaseModel):
     address: str
     map_long: str
     map_lat: str
-    phones: List[UpdatePhone]
+    phones: List[CreatePhone]

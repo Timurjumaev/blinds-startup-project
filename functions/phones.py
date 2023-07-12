@@ -24,14 +24,3 @@ def create_phone(comment, number, source_id, user_id, db, source, branch_id):
     )
     save_in_db(db, new_phone_db)
 
-
-def update_phone(phone_id, comment, number, source_id, user_id, db, source):
-    db.query(Phones).filter(Phones.id == phone_id).update({
-        Phones.number: number,
-        Phones.comment: comment,
-        Phones.source: source,
-        Phones.source_id: source_id,
-        Phones.user_id: user_id
-    })
-    db.commit()
-

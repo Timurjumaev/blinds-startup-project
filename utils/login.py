@@ -6,6 +6,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm.session import Session
 from db import database
+from models.branches import Branches
 from schemas.tokens import Token, TokenData
 from schemas.users import CreateUser
 from models.users import Users
@@ -68,6 +69,7 @@ async def get_current_active_user(current_user: CreateUser = Depends(get_current
 @login_router.post("/token", response_model=Token)
 async def login_for_access_token(db: Session = Depends(database), form_data: OAuth2PasswordRequestForm = Depends()):
     user = db.query(Users).where(Users.username == form_data.username).first()
+    branch = db.query(Branches).filter(Branches.id == user.branch_id).first()
     if user:
         is_validate_password = pwd_context.verify(form_data.password, user.password_hash)
     else:
@@ -88,4 +90,5 @@ async def login_for_access_token(db: Session = Depends(database), form_data: OAu
         Users.token: access_token
     })
     db.commit()
-    return {'id': user.id, "access_token": access_token, "token_type": "bearer", "role": user.role}
+    return {'id': user.id, "access_token": access_token,
+            "token_type": "bearer", "role": user.role, "branch": branch.name}
