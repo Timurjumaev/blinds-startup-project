@@ -10,3 +10,7 @@ class UpdateStandart_mechanism(BaseModel):
     id: int
     mechanism_id: int
     quantity: int
+
+
+class DeleteStandart_mechanism(BaseModel):
+    id: int

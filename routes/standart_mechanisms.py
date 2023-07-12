@@ -1,4 +1,6 @@
 import inspect
+from typing import List
+
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from functions.standart_mechanisms import all_standart_mechanisms, create_standart_mechanism_m, \
@@ -6,7 +8,7 @@ from functions.standart_mechanisms import all_standart_mechanisms, create_standa
 from models.standart_mechanisms import Standart_mechanisms
 from utils.login import get_current_active_user
 from utils.db_operations import the_one
-from schemas.standart_mechanisms import CreateStandart_mechanism, UpdateStandart_mechanism
+from schemas.standart_mechanisms import CreateStandart_mechanism, UpdateStandart_mechanism, DeleteStandart_mechanism
 from schemas.users import CreateUser
 from db import database
 from utils.role_verification import role_verification
@@ -29,26 +31,26 @@ def get_standart_mechanisms(search: str = None, id: int = 0, page: int = 0, limi
 
 
 @standart_mechanisms_router.post("/create_standart_mechanism")
-def create_standart_mechanism(new_standart_mechanism: CreateStandart_mechanism, db: Session = Depends(database),
+def create_standart_mechanism(new_standart_mechanisms: List[CreateStandart_mechanism], db: Session = Depends(database),
                               current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    create_standart_mechanism_m(new_standart_mechanism, db, current_user)
+    create_standart_mechanism_m(new_standart_mechanisms, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 
 @standart_mechanisms_router.put("/update_standart_mechanism")
-def update_standart_mechanism(this_standart_mechanism: UpdateStandart_mechanism, db: Session = Depends(database),
+def update_standart_mechanism(this_standart_mechanisms: List[UpdateStandart_mechanism], db: Session = Depends(database),
                               current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    update_standart_mechanism_m(this_standart_mechanism, db, current_user)
+    update_standart_mechanism_m(this_standart_mechanisms, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 
 @standart_mechanisms_router.delete("/delete_standart_mechanism")
-def delete_standart_mechanism(id: int, db: Session = Depends(database),
+def delete_standart_mechanism(delete_standart_mechanisms: List[DeleteStandart_mechanism], db: Session = Depends(database),
                               current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
-    delete_standart_mechanism_m(id, db, current_user)
+    delete_standart_mechanism_m(delete_standart_mechanisms, db, current_user)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
 
 

@@ -32,35 +32,38 @@ def all_standart_mechanisms(search, page, limit, mechanism_id, db, thisuser):
     return pagination(standart_mechanism, page, limit)
 
 
-def create_standart_mechanism_m(form, db, thisuser):
-    the_one(db, Mechanisms, form.mechanism_id, thisuser)
-    if db.query(Standart_mechanisms).filter(Standart_mechanisms.mechanism_id == form.mechanism_id).first():
-        raise HTTPException(status_code=400, detail="This mechanism already have his own standart_mechanism!")
-    new_standart_mechanism_db = Standart_mechanisms(
-        mechanism_id=form.mechanism_id,
-        quantity=form.quantity,
-        user_id=thisuser.id,
-        branch_id=thisuser.branch_id
-    )
-    save_in_db(db, new_standart_mechanism_db)
+def create_standart_mechanism_m(forms, db, thisuser):
+    for form in forms:
+        the_one(db, Mechanisms, form.mechanism_id, thisuser)
+        if db.query(Standart_mechanisms).filter(Standart_mechanisms.mechanism_id == form.mechanism_id).first():
+            raise HTTPException(status_code=400, detail="This mechanism already have his own standart_mechanism!")
+        new_standart_mechanism_db = Standart_mechanisms(
+            mechanism_id=form.mechanism_id,
+            quantity=form.quantity,
+            user_id=thisuser.id,
+            branch_id=thisuser.branch_id
+        )
+        save_in_db(db, new_standart_mechanism_db)
 
 
-def update_standart_mechanism_m(form, db, thisuser):
-    the_one(db, Standart_mechanisms, form.id, thisuser), the_one(db, Mechanisms, form.mechanism_id, thisuser)
-    sm = db.query(Standart_mechanisms).filter(Standart_mechanisms.id == form.id).first()
-    if sm.mechanism_id == form.mechanism_id or db.query(Standart_mechanisms).filter(Standart_mechanisms.mechanism_id ==
-                                                                                    form.mechanism_id).first() is None:
-        db.query(Standart_mechanisms).filter(Standart_mechanisms.id == form.id).update({
-            Standart_mechanisms.mechanism_id: form.mechanism_id,
-            Standart_mechanisms.quantity: form.quantity,
-            Standart_mechanisms.user_id: thisuser.id
-        })
+def update_standart_mechanism_m(forms, db, thisuser):
+    for form in forms:
+        the_one(db, Standart_mechanisms, form.id, thisuser), the_one(db, Mechanisms, form.mechanism_id, thisuser)
+        sm = db.query(Standart_mechanisms).filter(Standart_mechanisms.id == form.id).first()
+        if sm.mechanism_id == form.mechanism_id or db.query(Standart_mechanisms).filter(Standart_mechanisms.mechanism_id ==
+                                                                                        form.mechanism_id).first() is None:
+            db.query(Standart_mechanisms).filter(Standart_mechanisms.id == form.id).update({
+                Standart_mechanisms.mechanism_id: form.mechanism_id,
+                Standart_mechanisms.quantity: form.quantity,
+                Standart_mechanisms.user_id: thisuser.id
+            })
+            db.commit()
+        else:
+            raise HTTPException(status_code=400, detail="This mechanism already have his own standart_mechanism!")
+
+
+def delete_standart_mechanism_m(forms, db, user):
+    for form in forms:
+        the_one(db, Standart_mechanisms, form.id, user)
+        db.query(Standart_mechanisms).filter(Standart_mechanisms.id == form.id).delete()
         db.commit()
-    else:
-        raise HTTPException(status_code=400, detail="This mechanism already have his own standart_mechanism!")
-
-
-def delete_standart_mechanism_m(id, db, user):
-    the_one(db, Standart_mechanisms, id, user)
-    db.query(Standart_mechanisms).filter(Standart_mechanisms.id == id).delete()
-    db.commit()
