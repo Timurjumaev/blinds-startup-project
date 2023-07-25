@@ -12,9 +12,9 @@ class Collactions(Base):
     category_id = Column(Integer)
     branch_id = Column(Integer)
 
-
     category = relationship('Categories', foreign_keys=[category_id],
                             primaryjoin=lambda: and_(Categories.id == Collactions.category_id))
 
     files = relationship("Uploaded_files", foreign_keys=[id], primaryjoin=lambda:
                          and_(Uploaded_files.source_id == Collactions.id, Uploaded_files.source == "collaction"))
+

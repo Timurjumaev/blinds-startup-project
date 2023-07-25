@@ -28,3 +28,4 @@ from models.loans import Loans
 from models.uploaded_files import Uploaded_files
 from models.branches import Branches
 from models.notifications import Notifications
+from models.user_balances import User_balances

@@ -8,14 +8,19 @@ from utils.pagination import pagination
 from models.mechanisms import Mechanisms
 
 
-def all_mechanisms(search, page, limit, db, thisuser):
+def all_mechanisms(search, page, limit, collaction_id, db, thisuser):
     mechanisms = db.query(Mechanisms).filter(Mechanisms.branch_id == thisuser.branch_id)\
         .options(joinedload(Mechanisms.collaction),
-                 joinedload(Mechanisms.files))
+                 joinedload(Mechanisms.files),
+                 joinedload(Mechanisms.standart_mechanism))
+    if collaction_id:
+        collaction_filter = Mechanisms.collaction_id == collaction_id
+    else:
+        collaction_filter = Mechanisms.id > 0
     if search:
         search_formatted = "%{}%".format(search)
         mechanisms = mechanisms.filter(Mechanisms.name.like(search_formatted) | Collactions.name.like(search_formatted))
-    mechanisms = mechanisms.order_by(Mechanisms.name.asc())
+    mechanisms = mechanisms.filter(collaction_filter).order_by(Mechanisms.name.asc())
     return pagination(mechanisms, page, limit)
 
 

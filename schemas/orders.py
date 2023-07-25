@@ -13,4 +13,6 @@ class UpdateOrder(BaseModel):
     customer_id: int
     status: str
     delivery_date: datetime.date
+    discount: float
+
 

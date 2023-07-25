@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
-
 from functions.notifications import manager
 from models.currencies import Currencies
 from models.kassas import Kassas
 from models.supplier_balances import Supplier_balances
 from models.suppliers import Suppliers
+from models.user_balances import User_balances
 from models.users import Users
 from schemas.notifications import NotificationSchema
 from utils.db_operations import save_in_db, the_one
@@ -121,6 +121,20 @@ async def create_expense_e(form, db, thisuser):
             Kassas.balance: Kassas.balance - form.money
         })
         db.commit()
+        user_balance = db.query(User_balances).filter(User_balances.user_id == form.source_id,
+                                                      User_balances.currency_id == form.currency_id)
+        if user_balance.first():
+            user_balance.update({
+                User_balances.balance: User_balances.balance - form.money
+            })
+        else:
+            new_user_balance = User_balances(
+                balance=-form.money,
+                currency_id=form.currency_id,
+                user_id=form.source_id,
+                branch_id=thisuser.branch_id
+            )
+            save_in_db(db, new_user_balance)
     else:
         raise HTTPException(status_code=400, detail="source error or money <=0")
 
@@ -134,6 +148,16 @@ def delete_expense_e(id, db, user):
     db.query(Kassas).filter(Kassas.id == this_expense.kassa_id).update({
         Kassas.balance: Kassas.balance + this_expense.money
     })
+    if this_expense.source == "user":
+        db.query(User_balances).filter(User_balances.user_id == this_expense.source_id,
+                                       User_balances.currency_id == this_expense.currency_id).update({
+            User_balances.balance: User_balances.balance + this_expense.money
+        })
+    elif this_expense.source == "supplier":
+        db.query(Supplier_balances).filter(Suppliers.supplier_id == this_expense.source_id,
+                                           Supplier_balances.currency_id == this_expense.currency_id).update({
+            Supplier_balances.balance: Supplier_balances.balance + this_expense.money
+        })
     db.commit()
 
 

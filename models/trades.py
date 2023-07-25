@@ -35,3 +35,4 @@ class Trades(Base):
 
     trade_mechanism = relationship('Trade_mechanisms', foreign_keys=[id],
                                    primaryjoin=lambda: and_(Trade_mechanisms.trade_id == Trades.id))
+

@@ -15,14 +15,14 @@ users_router = APIRouter(
 
 @users_router.get("/get_users")
 def get_users(search: str = None, id: int = 0, page: int = 0, limit: int = 25, status: bool = None,
-              db: Session = Depends(database),
+              branch_id: int = None, db: Session = Depends(database),
               current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
         return one_user(db, current_user, id)
-    return all_users(search, page, limit, status, db, current_user)
+    return all_users(search, page, limit, status, branch_id, db, current_user)
 
 
 @users_router.post("/create_user")

@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
-
 from functions.notifications import manager
 from models.collactions import Collactions
 from models.currencies import Currencies
@@ -22,7 +21,8 @@ from models.incomes import Incomes
 
 def all_incomes(search, page, limit, kassa_id, db, thisuser):
     allowed_time = timedelta(minutes=5)
-    for expense in db.query(Incomes).filter(Incomes.branch_id == thisuser.branch_id).all():
+    for expense in db.query(Incomes).filter(Incomes.branch_id == thisuser.branch_id)\
+            .options(joinedload(Incomes.source_order).options(joinedload(Orders.customer))).all():
         if expense.time + allowed_time < datetime.now():
             db.query(Incomes).filter(Incomes.id == expense.id).update({
                 Incomes.updelstatus: False
@@ -225,6 +225,14 @@ def delete_income_e(id, db, user):
     db.query(Kassas).filter(Kassas.id == this_income.kassa_id).update({
         Kassas.balance: Kassas.balance - this_income.money
     })
+    if this_income.source == "order":
+        db.query(Orders).filter(Orders.id == this_income.source_id).update({
+            Orders.income_status: True
+        })
+    else:
+        db.query(Loans).filter(Loans.id == this_income.source_id).update({
+            Loans.residual: Loans.residual + this_income.money
+        })
     db.commit()
 
 

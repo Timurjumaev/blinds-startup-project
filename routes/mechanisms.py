@@ -1,12 +1,11 @@
 import inspect
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from sqlalchemy.orm import Session, joinedload
 from functions.mechanisms import create_mechanism_m, update_mechanism_m, all_mechanisms
 from models.mechanisms import Mechanisms
 from utils.login import get_current_active_user
-from utils.db_operations import the_one
 from schemas.users import CreateUser
-from schemas.mechanisms import CreateMechanism, UpdateMechanism
+from schemas.mechanisms import UpdateMechanism
 from db import database
 from utils.role_verification import role_verification
 
@@ -17,18 +16,20 @@ mechanisms_router = APIRouter(
 
 
 @mechanisms_router.get("/get_mechanisms")
-def get_mechanisms(search: str = None, id: int = 0, page: int = 0, limit: int = 25, db: Session = Depends(database),
-                   current_user: CreateUser = Depends(get_current_active_user)):
+def get_mechanisms(search: str = None, id: int = 0, page: int = 0, limit: int = 25, collaction_id: int = None,
+                   db: Session = Depends(database), current_user: CreateUser = Depends(get_current_active_user)):
     role_verification(current_user, inspect.currentframe().f_code.co_name)
     if page < 0 or limit < 0:
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
-        return the_one(db, Mechanisms, id, current_user)
-    return all_mechanisms(search, page, limit, db, current_user)
+        return db.query(Mechanisms).filter(Mechanisms.branch_id == current_user.branch_id,
+                                           Mechanisms.id == id).options(joinedload(Mechanisms.files)).first()
+    return all_mechanisms(search, page, limit, collaction_id, db, current_user)
 
 
 @mechanisms_router.post("/create_mechanism")
-def create_mechanism(name: str, comment: str, collaction_id: int, olchov: str,
+def create_mechanism(name: str = Form(...), comment: str = Form(...), collaction_id: int = Form(...),
+                     olchov: str = Form(...),
                      db: Session = Depends(database),
                      current_user: CreateUser = Depends(get_current_active_user),
                      file: UploadFile = File(None)):

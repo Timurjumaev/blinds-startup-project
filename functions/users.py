@@ -8,9 +8,16 @@ from models.users import Users
 from utils.login import get_password_hash
 
 
-def all_users(search, page, limit, status, db, thisuser):
-    users = db.query(Users).filter(Users.branch_id == thisuser.branch_id).options(joinedload(Users.phones),
-                                                                                  joinedload(Users.files))
+def all_users(search, page, limit, status, branch_id,  db, thisuser):
+    if thisuser.branch_id:
+        users = db.query(Users).filter(Users.branch_id == thisuser.branch_id).options(joinedload(Users.phones),
+                                                                                      joinedload(Users.files),
+                                                                                      joinedload(Users.balansi))
+    else:
+        users = db.query(Users).options(joinedload(Users.phones),
+                                        joinedload(Users.files))
+    if branch_id:
+        users = users.filter(Users.branch_id == branch_id)
     if search:
         search_formatted = "%{}%".format(search)
         users = users.filter(Users.name.like(search_formatted))
@@ -20,13 +27,14 @@ def all_users(search, page, limit, status, db, thisuser):
         users = users
     else:
         users = users.filter(Users.status == False)
-    users = users.order_by(Users.name.asc())
+    users = users.order_by(Users.name.desc())
     return pagination(users, page, limit)
 
 
 def one_user(db, user, ident):
     the_user = db.query(Users).filter(Users.branch_id == user.branch_id,
-                                      Users.id == ident).options(joinedload(Users.phones)).first()
+                                      Users.id == ident).options(joinedload(Users.phones),
+                                                                 joinedload(Users.files)).first()
     if the_user is None:
         raise HTTPException(status_code=404)
     return the_user

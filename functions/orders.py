@@ -62,20 +62,22 @@ def one_order_r(order_id, db, thisuser):
             money = money + this_money
         else:
             raise HTTPException(status_code=400, detail="Ushbu o'lchamdagi material tegishli bo'lgan kolleksiyaga hali narx belgilanmagan!")
-    this_customer = db.query(Customers).filter(Customers.id == this_order.customer_id).first()
-    this_discount = db.query(Discounts).filter(Discounts.type == this_customer.type).first()
-    if this_discount is None:
-        raise HTTPException(status_code=400, detail="Mijozni turiga teng bolgan turdagi chegirma topilmadi!")
-    total_discount = (money * this_discount.percent) / 100
-    total_money = money - total_discount
+    total_money = money - this_order.discount
     this_income = db.query(Incomes).filter(Incomes.source == "order", Incomes.source_id == this_order.id).first()
     if this_income:
         db.query(Orders).filter(Orders.id == this_order.id).update({
             Orders.income_status: False
         })
         db.commit()
+    customer = db.query(Customers).filter(Customers.id == Orders.customer_id).first()
+    discount = db.query(Discounts).filter(Discounts.type == customer.type).first()
+    if discount:
+        discount_sum = total_money * discount.percent / 100
+    else:
+        discount_sum = 0
     return (this_order,
-            {"money": total_money})
+            {"money": total_money},
+            {"discount": discount_sum})
 
 
 def create_order_r(form, db, thisuser):
@@ -102,11 +104,14 @@ async def update_order_r(form, db, thisuser):
     if db.query(Orders).filter(Orders.id == form.id).first().status == "true" and form.status != "false" and form.status != "true" and form.status != "done":
         raise HTTPException(status_code=400,
                             detail="Updated_status is only false, true or done!")
+    if form.status != "false" and db.query(Trades).filter(Trades.order_id == form.id).first() is None:
+        raise HTTPException(status_code=400, detail="Ushbu buyurtmada savdo mavjud emas!")
     db.query(Orders).filter(Orders.id == form.id).update({
         Orders.customer_id: form.customer_id,
         Orders.status: form.status,
         Orders.user_id: thisuser.id,
-        Orders.delivery_date: form.delivery_date
+        Orders.delivery_date: form.delivery_date,
+        Orders.discount: form.discount
     })
     db.commit()
     this_customer = db.query(Customers).filter(Customers.id == form.customer_id).first()

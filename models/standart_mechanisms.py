@@ -14,7 +14,8 @@ class Standart_mechanisms(Base):
     branch_id = Column(Integer)
 
     mechanism = relationship("Mechanisms", foreign_keys=[mechanism_id],
-                             primaryjoin=lambda: and_(Mechanisms.id == Standart_mechanisms.mechanism_id))
+                             primaryjoin=lambda: and_(Mechanisms.id == Standart_mechanisms.mechanism_id),
+                             backref="standart_mechanism")
 
     user = relationship("Users", foreign_keys=[user_id],
                         primaryjoin=lambda: and_(Users.id == Standart_mechanisms.user_id))
