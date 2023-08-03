@@ -18,7 +18,7 @@ from utils.pagination import pagination
 from models.trades import Trades
 
 
-def all_trades(search, page, limit, order_id, stage_id, db, thisuser):
+def all_trades(search, page, limit, order_id, stage_id, db, arxiv, thisuser):
     trades = db.query(Trades)\
         .filter(Trades.branch_id == thisuser.branch_id)\
         .options(joinedload(Trades.user),
@@ -42,13 +42,16 @@ def all_trades(search, page, limit, order_id, stage_id, db, thisuser):
                         (Stages.name.like(search_formatted))
     else:
         search_filter = Trades.id > 0
-    trades = trades.filter(search_filter, order_filter, stage_filter).order_by(Trades.id.asc())
+    if arxiv:
+        arxiv_filter = Trades.status == "done"
+    else:
+        arxiv_filter = Trades.status != "done"
+    trades = trades.filter(search_filter, order_filter, stage_filter, arxiv_filter).order_by(Trades.id.desc())
     return pagination(trades, page, limit)
 
 
 async def create_trade_e(form, db, thisuser):
-    the_one(db, Materials, form.material_id, thisuser), the_one(db, Stages, form.stage_id, thisuser), \
-        the_one(db, Orders, form.order_id, thisuser)
+    the_one(db, Materials, form.material_id, thisuser), the_one(db, Orders, form.order_id, thisuser)
     material = db.query(Materials).filter(Materials.id == form.material_id).first()
     store = db.query(Warehouse_materials).filter(Warehouse_materials.material_id == form.material_id).first()
     if store.width < form.width or store.height < form.height:
@@ -57,6 +60,8 @@ async def create_trade_e(form, db, thisuser):
     if this_order.status != "false":
         raise HTTPException(status_code=400, detail="Selected order already active!")
     stage = db.query(Stages).filter(Stages.number == 1).first()
+    if stage is None:
+        raise HTTPException(status_code=400, detail="Ishni boshlash uchun bosqich mavjud emas!")
     new_trade_db = Trades(
         material_id=form.material_id,
         width=form.width,
@@ -75,8 +80,8 @@ async def create_trade_e(form, db, thisuser):
         Warehouse_materials.height: Warehouse_materials.height - form.height
     })
     db.commit()
-    stage = db.query(Stages).filter(Stages.id == form.stage_id).first()
-    stage_users = db.query(Stage_users).filter(Stage_users.stage_id == form.stage_id,
+    stage = db.query(Stages).filter(Stages.id == stage.id).first()
+    stage_users = db.query(Stage_users).filter(Stage_users.stage_id == stage.id,
                                                Stage_users.branch_id == thisuser.branch_id).all()
     for stage_user in stage_users:
         user = db.query(Users).filter(Users.id == stage_user.user_id).first()
@@ -128,6 +133,12 @@ async def update_trade_e(form, db, thisuser):
     store = db.query(Warehouse_materials).filter(Warehouse_materials.material_id == material.id).first()
     if store.width < form.width or store.height < form.height:
         raise HTTPException(status_code=400, detail="Siz tanlagan material yetarli emas!")
+    this_stage = db.query(Stages).filter(Stages.id == form.stage_id).first()
+    stage = db.query(Stages).filter(Stages.number > this_stage.number).first()
+    if stage:
+        finish = False
+    else:
+        finish = True
     db.query(Trades).filter(Trades.id == form.id).update({
         Trades.material_id: form.material_id,
         Trades.width: form.width,
@@ -136,6 +147,7 @@ async def update_trade_e(form, db, thisuser):
         Trades.status: form.status,
         Trades.comment: form.comment,
         Trades.user_id: thisuser.id,
+        Trades.finish: finish,
         Trades.order_id: form.order_id
     })
     db.commit()
@@ -246,6 +258,27 @@ def update_trade_material_s(form, db, thisuser):
     })
     db.commit()
     raise HTTPException(status_code=200, detail="Successful!")
+
+
+def one_trade(form, db, user):
+    for i in form:
+        trade = the_one(db, Trades, i.id, user)
+        stage = db.query(Stages).filter(Stages.id == trade.stage_id).first()
+        next_stage = db.query(Stages).filter(Stages.number == (stage.number + 1)).first()
+        if next_stage is None:
+            raise HTTPException(status_code=400, detail="Tanlangan savdo allaqachon oxirgi bosqichda yoki undan kiyingi bosqich mavjud emas!")
+        this_stage = db.query(Stages).filter(Stages.number > next_stage.number).first()
+        if this_stage:
+            finish = False
+        else:
+            finish = True
+        db.query(Trades).filter(Trades.id == trade.id).update({
+            Trades.stage_id: next_stage.id,
+            Trades.finish: finish
+        })
+        db.commit()
+
+
 
 
 

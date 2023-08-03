@@ -9,7 +9,9 @@ from models.materials import Materials
 
 
 def all_materials(search, page, limit, col_id, db, thisuser):
-    materials = db.query(Materials).filter(Materials.branch_id == thisuser.branch_id).options(joinedload(Materials.files))
+    materials = db.query(Materials).filter(Materials.branch_id == thisuser.branch_id)\
+        .options(joinedload(Materials.files),
+                 joinedload(Materials.collaction).options(joinedload(Collactions.category)))
     if search:
         search_formatted = "%{}%".format(search)
         materials = materials.filter(Materials.name.like(search_formatted))

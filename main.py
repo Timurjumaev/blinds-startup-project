@@ -34,7 +34,7 @@ from routes.trades import trades_router
 from utils.login import login_router
 # from utils.refresh import refresh_router
 
-app = FastAPI()
+app = FastAPI(docs_url="/boburiy")
 
 app.include_router(users_router)
 app.include_router(login_router)

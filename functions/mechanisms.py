@@ -10,7 +10,7 @@ from models.mechanisms import Mechanisms
 
 def all_mechanisms(search, page, limit, collaction_id, db, thisuser):
     mechanisms = db.query(Mechanisms).filter(Mechanisms.branch_id == thisuser.branch_id)\
-        .options(joinedload(Mechanisms.collaction),
+        .options(joinedload(Mechanisms.collaction).subqueryload(Collactions.category),
                  joinedload(Mechanisms.files),
                  joinedload(Mechanisms.standart_mechanism))
     if collaction_id:

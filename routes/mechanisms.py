@@ -2,6 +2,7 @@ import inspect
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
 from functions.mechanisms import create_mechanism_m, update_mechanism_m, all_mechanisms
+from models.collactions import Collactions
 from models.mechanisms import Mechanisms
 from utils.login import get_current_active_user
 from schemas.users import CreateUser
@@ -23,7 +24,8 @@ def get_mechanisms(search: str = None, id: int = 0, page: int = 0, limit: int = 
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
         return db.query(Mechanisms).filter(Mechanisms.branch_id == current_user.branch_id,
-                                           Mechanisms.id == id).options(joinedload(Mechanisms.files)).first()
+                                           Mechanisms.id == id).options(joinedload(Mechanisms.files),
+                                                                        joinedload(Mechanisms.collaction).subqueryload(Collactions.category)).first()
     return all_mechanisms(search, page, limit, collaction_id, db, current_user)
 
 

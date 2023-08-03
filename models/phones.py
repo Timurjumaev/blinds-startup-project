@@ -11,7 +11,7 @@ from models.warehouses import Warehouses
 class Phones(Base):
     __tablename__ = "phones"
     id = Column(Integer, autoincrement=True, primary_key=True)
-    number = Column(String(999))
+    number = Column(Integer)
     comment = Column(String(999))
     source = Column(String(999))
     source_id = Column(Integer)

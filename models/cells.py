@@ -11,6 +11,7 @@ class Cells(Base):
     name1 = Column(String(999))
     name2 = Column(String(999))
     warehouse_id = Column(Integer)
+    busy = Column(Boolean, default=False)
     branch_id = Column(Integer)
 
     warehouse = relationship('Warehouses', foreign_keys=[warehouse_id],

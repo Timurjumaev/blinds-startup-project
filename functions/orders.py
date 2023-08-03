@@ -7,6 +7,8 @@ from models.currencies import Currencies
 from models.customers import Customers
 from models.discounts import Discounts
 from models.incomes import Incomes
+from models.kassas import Kassas
+from models.loans import Loans
 from models.materials import Materials
 from models.prices import Prices
 from models.trades import Trades
@@ -15,6 +17,7 @@ from schemas.notifications import NotificationSchema
 from utils.db_operations import save_in_db, the_one
 from utils.pagination import pagination
 from models.orders import Orders
+from sqlalchemy.sql import label, func
 
 
 def all_orders(search, page, limit, customer_id, db, thisuser, archive):
@@ -39,7 +42,7 @@ def all_orders(search, page, limit, customer_id, db, thisuser, archive):
     elif customer_id is None and search:
         orders = orders.filter(search_filter).order_by(Orders.id.asc())
     else:
-        orders = orders.order_by(Orders.id.asc())
+        orders = orders.order_by(Orders.delivery_date.desc())
     return pagination(orders, page, limit)
 
 
@@ -63,20 +66,19 @@ def one_order_r(order_id, db, thisuser):
         else:
             raise HTTPException(status_code=400, detail="Ushbu o'lchamdagi material tegishli bo'lgan kolleksiyaga hali narx belgilanmagan!")
     total_money = money - this_order.discount
-    this_income = db.query(Incomes).filter(Incomes.source == "order", Incomes.source_id == this_order.id).first()
-    if this_income:
-        db.query(Orders).filter(Orders.id == this_order.id).update({
-            Orders.income_status: False
-        })
-        db.commit()
     customer = db.query(Customers).filter(Customers.id == Orders.customer_id).first()
     discount = db.query(Discounts).filter(Discounts.type == customer.type).first()
     if discount:
         discount_sum = total_money * discount.percent / 100
     else:
         discount_sum = 0
+    total_sum = db.query(func.coalesce(func.sum(Incomes.money), 0)).filter(
+            Incomes.source == "order",
+            Incomes.source_id == order_id
+        ).scalar()
     return (this_order,
             {"money": total_money},
+            {"incomes": total_sum},
             {"discount": discount_sum})
 
 
@@ -88,7 +90,6 @@ def create_order_r(form, db, thisuser):
         status="false",
         user_id=thisuser.id,
         delivery_date=form.delivery_date,
-        income_status=True,
         branch_id=thisuser.branch_id
     )
     save_in_db(db, new_order_db)
@@ -106,6 +107,7 @@ async def update_order_r(form, db, thisuser):
                             detail="Updated_status is only false, true or done!")
     if form.status != "false" and db.query(Trades).filter(Trades.order_id == form.id).first() is None:
         raise HTTPException(status_code=400, detail="Ushbu buyurtmada savdo mavjud emas!")
+    old_order = db.query(Orders).filter(Orders.id == form.id).first()
     db.query(Orders).filter(Orders.id == form.id).update({
         Orders.customer_id: form.customer_id,
         Orders.status: form.status,
@@ -115,15 +117,27 @@ async def update_order_r(form, db, thisuser):
     })
     db.commit()
     this_customer = db.query(Customers).filter(Customers.id == form.customer_id).first()
+    trades = db.query(Trades).filter(Trades.order_id == form.id).all()
     if form.status == "true":
-        for user in users:
-            data = NotificationSchema(
-                title="Yangi buyurtma!",
-                body=f"Hurmatli foydalanuvchi {this_customer.name} ismli mijozdan buyurtma olindi!",
-                user_id=user.id,
-            )
-            await manager.send_user(message=data, user_id=user.id, db=db)
+        for trade in trades:
+            db.query(Trades).filter(Trades.id == trade.id).update({
+                Trades.status: form.status
+            })
+            db.commit()
+        if old_order.status == "false":
+            for user in users:
+                data = NotificationSchema(
+                    title="Yangi buyurtma!",
+                    body=f"Hurmatli foydalanuvchi {this_customer.name} ismli mijozdan buyurtma olindi!",
+                    user_id=user.id,
+                )
+                await manager.send_user(message=data, user_id=user.id, db=db)
     if form.status == "done":
+        for trade in trades:
+            db.query(Trades).filter(Trades.id == trade.id).update({
+                Trades.status: form.status
+            })
+            db.commit()
         for user in users:
             data = NotificationSchema(
                 title="Yakunlangan buyurtma!",
@@ -131,12 +145,87 @@ async def update_order_r(form, db, thisuser):
                 user_id=user.id,
             )
             await manager.send_user(message=data, user_id=user.id, db=db)
+        if form.kassa_id != 0:
+            kassa = the_one(db, Kassas, form.kassa_id, thisuser)
+            currency = db.query(Currencies).filter(Currencies.currency == "so'm").first()
+            if currency is None:
+                raise HTTPException(status_code=400, detail="so'mlik valyuta mavjud emas!")
+            if kassa.currency_id != currency.id:
+                raise HTTPException(status_code=400, detail="Tanlangan kassaning valyutasi so'm emas!")
+            a = one_order_r(form.id, db, thisuser)
+            if form.summa > a.money - a.income:
+                raise HTTPException(status_code=400, detail="Kiritilayotgan pul qoldiq summadan katta!")
+            elif form.summa == a.money - a.income:
+                income_db = Incomes(
+                    money=form.summa,
+                    currency_id=currency.id,
+                    source="order",
+                    source_id=form.id,
+                    time=datetime.now(),
+                    user_id=thisuser.id,
+                    kassa_id=form.kassa_id,
+                    comment=form.comment,
+                    updelstatus=True,
+                    branch_id=thisuser.branch_id
+                )
+                save_in_db(db, income_db)
+                db.query(Kassas).filter(Kassas.id == form.kassa_id).update({
+                    Kassas.balance: Kassas.balance + form.summa
+                })
+                db.commit()
+            elif 0 < form.summa < a.money - a.income:
+                income_db = Incomes(
+                    money=form.summa,
+                    currency_id=currency.id,
+                    source="order",
+                    source_id=form.id,
+                    time=datetime.now(),
+                    user_id=thisuser.id,
+                    kassa_id=form.kassa_id,
+                    comment=form.comment,
+                    updelstatus=True,
+                    branch_id=thisuser.branch_id
+                )
+                save_in_db(db, income_db)
+                loan = Loans(
+                    money=a.money - a.income - form.summa,
+                    currency_id=currency.id,
+                    residual=a.money - a.income - form.summa,
+                    order_id=form.id,
+                    return_date=form.return_date,
+                    comment=form.comment,
+                    status=False,
+                    branch_id=thisuser.branch_id
+                )
+                save_in_db(db, loan)
+                db.query(Kassas).filter(Kassas.id == form.kassa_id).update({
+                    Kassas.balance: Kassas.balance + form.summa
+                })
+                db.commit()
+            else:
+                loan = Loans(
+                    money=a.money - a.income,
+                    currency_id=currency.id,
+                    residual=a.money - a.income,
+                    order_id=form.id,
+                    return_date=form.return_date,
+                    comment=form.comment,
+                    status=False,
+                    branch_id=thisuser.branch_id
+                )
+                save_in_db(db, loan)
 
 
 def delete_order_r(id, db, user):
-    the_one(db, Orders, id, user)
+    order = the_one(db, Orders, id, user)
+    if order.status != "false":
+        raise HTTPException(status_code=400, detail="Ushbu buyurtma allaqachon tasdiqlangan!")
     db.query(Orders).filter(Orders.id == id).delete()
+    trades = db.query(Trades).filter(Trades.order_id == id).all()
     db.commit()
+    for trade in trades:
+        db.query(Trades).filter(Trades.id == trade.id).delete()
+        db.commit()
 
 
 

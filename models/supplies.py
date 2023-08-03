@@ -1,11 +1,14 @@
 from sqlalchemy.orm import relationship
 from db import Base
 from sqlalchemy import *
+
+from models.cells import Cells
 from models.materials import Materials
 from models.mechanisms import Mechanisms
 from models.currencies import Currencies
 from models.suppliers import Suppliers
 from models.users import Users
+from models.warehouses import Warehouses
 
 
 class Supplies(Base):
@@ -24,7 +27,9 @@ class Supplies(Base):
     user_id1 = Column(Integer)
     status = Column(Boolean)
     user_id2 = Column(Integer)
-    branch_id = Column(Integer)
+    warehouse_id = Column(Integer)
+    cell_id = Column(Integer, default=0)
+    branch_id = Column(Integer, default=0)
 
     material = relationship('Materials', foreign_keys=[material_id],
                             primaryjoin=lambda: and_(Materials.id == Supplies.material_id))
@@ -43,3 +48,9 @@ class Supplies(Base):
 
     user2 = relationship('Users', foreign_keys=[user_id2],
                          primaryjoin=lambda: and_(Users.id == Supplies.user_id2))
+
+    warehouse = relationship('Warehouses', foreign_keys=[warehouse_id],
+                             primaryjoin=lambda: and_(Warehouses.id == Supplies.warehouse_id))
+
+    cell = relationship('Cells', foreign_keys=[cell_id],
+                        primaryjoin=lambda: and_(Cells.id == Supplies.cell_id))

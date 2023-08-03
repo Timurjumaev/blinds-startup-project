@@ -1,6 +1,7 @@
 from sqlalchemy.orm import joinedload
 from fastapi import HTTPException
 from models.cells import Cells
+from models.collactions import Collactions
 from models.currencies import Currencies
 from models.materials import Materials
 from models.mechanisms import Mechanisms
@@ -10,44 +11,40 @@ from utils.pagination import pagination
 from models.warehouse_materials import Warehouse_materials
 
 
-def all_warehouse_materials(search, page, limit, inspection, db, thisuser):
+def all_warehouse_materials(search, page, limit, cell_id, db, thisuser):
     wms = db.query(Warehouse_materials).filter(Warehouse_materials.branch_id == thisuser.branch_id).\
-                                        options(joinedload(Warehouse_materials.material),
+                                        options(joinedload(Warehouse_materials.material).options(joinedload(Materials.collaction).subqueryload(Collactions.category)),
                                                 joinedload(Warehouse_materials.warehouse),
-                                                joinedload(Warehouse_materials.mechanism),
+                                                joinedload(Warehouse_materials.mechanism).options(joinedload(Mechanisms.collaction).subqueryload(Collactions.category)),
                                                 joinedload(Warehouse_materials.currency),
                                                 joinedload(Warehouse_materials.cell))
-    search_formatted = "%{}%".format(search)
-    search_filter = (Materials.name.like(search_formatted)) | \
-                    (Warehouses.name.like(search_formatted)) | \
-                    (Mechanisms.name.like(search_formatted)) | \
-                    (Currencies.currency.like(search_formatted))
-    if inspection and inspection != "material" and inspection != "mechanism":
-        raise HTTPException(status_code=400, detail="You may choose material or mechanism!")
-    if inspection is None and search is None:
-        wms = wms.order_by(Warehouse_materials.id.asc())
-    elif inspection and search:
-        wms = wms.filter(search_filter).order_by(Warehouse_materials.id.asc())
-    elif inspection == "material" and search is None:
-        wms = wms.filter(Warehouse_materials.mechanism_id == 0)\
-            .order_by(Warehouse_materials.id.asc())
-    elif inspection == "material" and search:
-        wms = wms.filter(search_filter, Warehouse_materials.mechanism_id == 0) \
-            .order_by(Warehouse_materials.id.asc())
-    elif inspection == "mechanism" and search is None:
-        wms = wms.filter(Warehouse_materials.material_id == 0) \
-            .order_by(Warehouse_materials.id.asc())
-    elif inspection == "material" and search:
-        wms = wms.filter(search_filter, Warehouse_materials.material_id == 0) \
-            .order_by(Warehouse_materials.id.asc())
+    if search:
+        search_formatted = "%{}%".format(search)
+        search_filter = (Materials.name.like(search_formatted)) | \
+                        (Warehouses.name.like(search_formatted)) | \
+                        (Mechanisms.name.like(search_formatted)) | \
+                        (Currencies.currency.like(search_formatted))
     else:
-        raise HTTPException(status_code=400, detail="Error on search!")
+        search_filter = Warehouse_materials.id > 0
+    if cell_id:
+        cell_filter = Warehouse_materials.cell_id == cell_id
+    else:
+        cell_filter = Warehouse_materials.id > 0
+    wms = wms.filter(search_filter, cell_filter).order_by(Warehouse_materials.id.desc())
     return pagination(wms, page, limit)
 
 
 def update_warehouse_materials_s(form, db, user):
-    the_one(db, Warehouse_materials, form.id, user), the_one(db, Cells, form.cell_id, user)
+    m = the_one(db, Warehouse_materials, form.id, user)
+    the_one(db, Cells, form.cell_id, user)
+    old_cell = db.query(Cells).filter(Cells.id == m.cell_id).first()
     db.query(Warehouse_materials).filter(Warehouse_materials.id == form.id).update({
         Warehouse_materials.cell_id: form.cell_id,
     })
     db.commit()
+    if db.query(Warehouse_materials).filter(Warehouse_materials.cell_id == old_cell.id).firts() is None:
+        db.query(Cells).filter(Cells.id == old_cell.id).update({
+            Cells.busy: False,
+        })
+        db.commit()
+

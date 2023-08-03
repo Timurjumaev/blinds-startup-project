@@ -15,8 +15,8 @@ class Orders(Base):
     status = Column(String(999))
     user_id = Column(Integer)
     delivery_date = Column(Date)
-    income_status = Column(Boolean)
     discount = Column(Numeric, default=0)
+    money_status = Column(Boolean, default=False)
     branch_id = Column(Integer)
 
     customer = relationship('Customers', foreign_keys=[customer_id],

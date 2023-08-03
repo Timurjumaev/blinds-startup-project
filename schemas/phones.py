@@ -2,6 +2,6 @@ from pydantic import BaseModel
 
 
 class CreatePhone(BaseModel):
-    number: str
+    number: int
     comment: str
 

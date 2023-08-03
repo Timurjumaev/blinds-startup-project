@@ -14,5 +14,11 @@ class UpdateOrder(BaseModel):
     status: str
     delivery_date: datetime.date
     discount: float
+    summa: float
+    return_date: datetime.date
+    comment: str
+    kassa_id: int
+
+
 
 

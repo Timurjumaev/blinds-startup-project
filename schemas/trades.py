@@ -40,3 +40,7 @@ class UpdateMaterial(BaseModel):
     width: float
     height: float
 
+
+class NextStage(BaseModel):
+    id: int
+

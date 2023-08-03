@@ -11,4 +11,10 @@ class UpdateKassa(BaseModel):
     name: str
 
 
+class TransferSchema(BaseModel):
+    id1: int
+    id2: int
+    money: float
+    currency_id: int
+
 

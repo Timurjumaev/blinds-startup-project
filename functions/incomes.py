@@ -50,14 +50,14 @@ def all_incomes(search, page, limit, kassa_id, db, thisuser):
 
 
 async def create_income_e(form, db, thisuser):
-    the_one(db, Currencies, form.currency_id, thisuser), the_one(db, Kassas, form.kassa_id, thisuser)
+    kassa = the_one(db, Kassas, form.kassa_id, thisuser)
     users = db.query(Users).filter(Users.status, Users.branch_id == thisuser.branch_id, Users.role == "admin").all()
-    if form.currency_id != the_one(db, Kassas, form.kassa_id, thisuser).currency_id:
-        raise HTTPException(status_code=400, detail="Incomega kiritilayotgan currency bilan income kiritilayotgan kassaning currencysi bir xil emas!")
+    currency = db.query(Currencies).filter(Currencies.id == kassa.currency_id).first()
+    if currency.currency != "so'm":
+        raise HTTPException(status_code=400, detail="Kirim qilinayotgan kassaning valyutasi so'm emas!")
     thisorder = db.query(Orders).filter(Orders.id == form.source_id).first()
     thisloan = db.query(Loans).filter(Loans.id == form.source_id).first()
     if thisorder and form.source == "order":
-        this_order = the_one(db, Orders, form.source_id, thisuser)
         money = 0
         trades = db.query(Trades).filter(Trades.order_id == form.source_id).all()
         for trade in trades:
@@ -76,74 +76,42 @@ async def create_income_e(form, db, thisuser):
             else:
                 raise HTTPException(status_code=400,
                                     detail="Ushbu o'lchamdagi material tegishli bo'lgan kolleksiyaga hali narx belgilanmagan!")
-        this_customer = db.query(Customers).filter(Customers.id == this_order.customer_id).first()
-        this_discount = db.query(Discounts).filter(Discounts.type == this_customer.type).first()
-        if this_discount is None:
-            raise HTTPException(status_code=400, detail="Mijozni typega teng bolgan typeli discount topilmadi!")
-        total_discount = (money * this_discount.percent) / 100
-        total_money = money - total_discount
-        income_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
-        total_money_income_currency = total_money / income_currency.price
-        if total_money_income_currency < form.money or total_money_income_currency <= 0 or \
-                db.query(Incomes).filter(Incomes.source_id == form.source_id, Incomes.source == "order").first():
+        total_money = money - thisorder.discount
+        incomes = db.query(Incomes).filter(Incomes.source_id == form.source_id, Incomes.source == form.source).all()
+        total_income = 0
+        if incomes:
+            for income in incomes:
+                total_income = total_income + income.money
+        if total_income > 0:
+            total_money = total_money - total_income
+        if total_money < form.money or form.money <= 0:
             raise HTTPException(status_code=400,
-                                detail="Kiritilayotgan summa ushbu buyurtmaning narxidan katta yoki manfiy yoki"
-                                       "ushbu buyurtmaga tegishli kirim allaqachon mavjud!")
-        elif total_money_income_currency > form.money:
-            new_income_db = Incomes(
-                money=form.money,
-                currency_id=form.currency_id,
-                source=form.source,
-                source_id=form.source_id,
-                time=datetime.now(),
-                user_id=thisuser.id,
-                kassa_id=form.kassa_id,
-                comment=form.comment,
-                updelstatus=True,
-                branch_id=thisuser.branch_id
+                                detail="Kiritilayotgan summa ushbu buyurtmaning qoldiq narxidan katta yoki manfiy")
+        new_income_db = Incomes(
+            money=form.money,
+            currency_id=currency.id,
+            source=form.source,
+            source_id=form.source_id,
+            time=datetime.now(),
+            user_id=thisuser.id,
+            kassa_id=form.kassa_id,
+            comment=form.comment,
+            updelstatus=True,
+            branch_id=thisuser.branch_id
+        )
+        save_in_db(db, new_income_db)
+        if total_money == form.money:
+            db.query(Orders).filter(Orders.id == form.source_id).update({
+                Orders.money_status: True
+            })
+            db.commit()
+        for user in users:
+            data = NotificationSchema(
+                title="Yangi kirim!",
+                body=f"Hurmatli foydalanuvchi {form.money} so'm miqdorda kirim bo'ldi!",
+                user_id=user.id,
             )
-            save_in_db(db, new_income_db)
-            this_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
-            for user in users:
-                data = NotificationSchema(
-                    title="Yangi kirim!",
-                    body=f"Hurmatli foydalanuvchi {form.money} {this_currency.currency} miqdorda kirim bo'ldi!",
-                    user_id=user.id,
-                )
-                await manager.send_user(message=data, user_id=user.id, db=db)
-            new_loan_db = Loans(
-                money=total_money_income_currency - form.money,
-                currency_id=form.currency_id,
-                residual=total_money_income_currency - form.money,
-                order_id=form.source_id,
-                return_date=0,
-                comment=0,
-                status=False,
-                branch_id=thisuser.branch_id
-            )
-            save_in_db(db, new_loan_db)
-        elif total_money_income_currency == form.money:
-            new_income_db = Incomes(
-                money=form.money,
-                currency_id=form.currency_id,
-                source=form.source,
-                source_id=form.source_id,
-                time=datetime.now(),
-                user_id=thisuser.id,
-                kassa_id=form.kassa_id,
-                comment=form.comment,
-                updelstatus=True,
-                branch_id=thisuser.branch_id
-            )
-            save_in_db(db, new_income_db)
-            this_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
-            for user in users:
-                data = NotificationSchema(
-                    title="Yangi kirim!",
-                    body=f"Hurmatli foydalanuvchi {form.money} {this_currency.currency} miqdorda kirim bo'ldi!",
-                    user_id=user.id,
-                )
-                await manager.send_user(message=data, user_id=user.id, db=db)
+            await manager.send_user(message=data, user_id=user.id, db=db)
         db.query(Kassas).filter(Kassas.id == form.kassa_id).update({
             Kassas.balance: Kassas.balance + form.money
         })
@@ -225,14 +193,9 @@ def delete_income_e(id, db, user):
     db.query(Kassas).filter(Kassas.id == this_income.kassa_id).update({
         Kassas.balance: Kassas.balance - this_income.money
     })
-    if this_income.source == "order":
-        db.query(Orders).filter(Orders.id == this_income.source_id).update({
-            Orders.income_status: True
-        })
-    else:
-        db.query(Loans).filter(Loans.id == this_income.source_id).update({
-            Loans.residual: Loans.residual + this_income.money
-        })
+    db.query(Loans).filter(Loans.id == this_income.source_id).update({
+        Loans.residual: Loans.residual + this_income.money
+    })
     db.commit()
 
 

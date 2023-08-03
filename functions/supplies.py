@@ -1,6 +1,7 @@
 from datetime import datetime
 from fastapi import HTTPException
 from models.cells import Cells
+from models.collactions import Collactions
 from models.supplier_balances import Supplier_balances
 from models.warehouse_materials import Warehouse_materials
 from models.supplies import Supplies
@@ -15,10 +16,12 @@ from sqlalchemy.orm import joinedload
 
 
 def all_supplies(search, page, limit, supplier_id, status, db, thisuser):
-    supplies = db.query(Supplies).filter(Supplies.branch_id == thisuser.branch_id).options(joinedload(Supplies.material),
+    supplies = db.query(Supplies).filter(Supplies.branch_id == thisuser.branch_id).options(joinedload(Supplies.material).options(joinedload(Materials.collaction).subqueryload(Collactions.category)),
                                                                                            joinedload(Supplies.supplier),
-                                                                                           joinedload(Supplies.mechanism),
-                                                                                           joinedload(Supplies.currency))
+                                                                                           joinedload(Supplies.mechanism).options(joinedload(Mechanisms.collaction).subqueryload(Collactions.category)),
+                                                                                           joinedload(Supplies.currency),
+                                                                                           joinedload(Supplies.warehouse).load_only(Warehouses.name),
+                                                                                           joinedload(Supplies.cell))
     if status:
         status_filter = Supplies.status == True
     elif status is False:
@@ -135,6 +138,25 @@ def update_supply_y(form, db, thisuser):
     if form.status:
         the_one(db, Warehouses, form.warehouse_id, thisuser), the_one(db, Cells, form.cell_id, thisuser)
         user_id2 = thisuser.id
+        db.query(Supplies).filter(Supplies.id == form.id).update({
+            Supplies.material_id: form.material_id,
+            Supplies.width: form.width,
+            Supplies.height: form.height,
+            Supplies.mechanism_id: form.mechanism_id,
+            Supplies.quantity: form.quantity,
+            Supplies.price: form.price,
+            Supplies.currency_id: form.currency_id,
+            Supplies.supplier_id: form.supplier_id,
+            Supplies.up_time: datetime.now(),
+            Supplies.status: form.status,
+            Supplies.user_id2: user_id2,
+            Supplies.warehouse_id: form.warehouse_id,
+            Supplies.cell_id: form.cell_id
+        })
+        db.query(Cells).filter(Cells.id == form.cell_id).update({
+            Cells.busy: True
+        })
+        db.commit()
         new_warehouse_materials_db = Warehouse_materials(
             material_id=form.material_id,
             width=form.width,

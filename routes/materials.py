@@ -2,6 +2,7 @@ import inspect
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
 from functions.materials import create_material_l, update_material_l, all_materials
+from models.collactions import Collactions
 from models.materials import Materials
 from utils.login import get_current_active_user
 from schemas.users import CreateUser
@@ -24,7 +25,8 @@ def get_materials(search: str = None, id: int = 0, page: int = 0, limit: int = 2
         raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
     if id > 0:
         return db.query(Materials).filter(Materials.branch_id == current_user.branch_id,
-                                          Materials.id == id).options(joinedload(Materials.files)).first()
+                                          Materials.id == id).options(joinedload(Materials.files),
+                                                                      joinedload(Materials.collaction).subqueryload(Collactions.category)).first()
     return all_materials(search, page, limit, collaction_id, db, current_user)
 
 

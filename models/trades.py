@@ -4,7 +4,6 @@ from sqlalchemy import *
 from models.materials import Materials
 from models.orders import Orders
 from models.stages import Stages
-from models.trade_mechanisms import Trade_mechanisms
 from models.users import Users
 
 
@@ -19,6 +18,7 @@ class Trades(Base):
     comment = Column(String(999))
     order_id = Column(Integer)
     user_id = Column(Integer)
+    finish = Column(Boolean, default=False)
     branch_id = Column(Integer)
 
     stage = relationship('Stages', foreign_keys=[stage_id],
@@ -33,6 +33,4 @@ class Trades(Base):
     user = relationship('Users', foreign_keys=[user_id],
                         primaryjoin=lambda: and_(Users.id == Trades.user_id))
 
-    trade_mechanism = relationship('Trade_mechanisms', foreign_keys=[id],
-                                   primaryjoin=lambda: and_(Trade_mechanisms.trade_id == Trades.id))
 
