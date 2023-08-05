@@ -122,7 +122,7 @@ async def create_income_e(form, db, thisuser):
         elif thisloan.residual > form.money:
             new_income_db = Incomes(
                 money=form.money,
-                currency_id=form.currency_id,
+                currency_id=currency.id,
                 source=form.source,
                 source_id=form.source_id,
                 time=datetime.now(),
@@ -133,11 +133,10 @@ async def create_income_e(form, db, thisuser):
                 branch_id=thisuser.branch_id
             )
             save_in_db(db, new_income_db)
-            this_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
             for user in users:
                 data = NotificationSchema(
                     title="Yangi kirim!",
-                    body=f"Hurmatli foydalanuvchi {form.money} {this_currency.currency} miqdorda kirim bo'ldi!",
+                    body=f"Hurmatli foydalanuvchi {form.money} so'm miqdorda kirim bo'ldi!",
                     user_id=user.id,
                 )
                 await manager.send_user(message=data, user_id=user.id, db=db)
@@ -152,7 +151,7 @@ async def create_income_e(form, db, thisuser):
         elif thisloan.residual == form.money:
             new_income_db = Incomes(
                 money=form.money,
-                currency_id=form.currency_id,
+                currency_id=currency.id,
                 source=form.source,
                 source_id=form.source_id,
                 time=datetime.now(),
@@ -163,11 +162,10 @@ async def create_income_e(form, db, thisuser):
                 branch_id=thisuser.branch_id
             )
             save_in_db(db, new_income_db)
-            this_currency = db.query(Currencies).filter(Currencies.id == form.currency_id).first()
             for user in users:
                 data = NotificationSchema(
                     title="Yangi kirim!",
-                    body=f"Hurmatli foydalanuvchi {form.money} {this_currency.currency} miqdorda kirim bo'ldi!",
+                    body=f"Hurmatli foydalanuvchi {form.money} so'm miqdorda kirim bo'ldi!",
                     user_id=user.id,
                 )
                 await manager.send_user(message=data, user_id=user.id, db=db)

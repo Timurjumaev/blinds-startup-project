@@ -154,7 +154,7 @@ def delete_expense_e(id, db, user):
             User_balances.balance: User_balances.balance + this_expense.money
         })
     elif this_expense.source == "supplier":
-        db.query(Supplier_balances).filter(Suppliers.supplier_id == this_expense.source_id,
+        db.query(Supplier_balances).filter(Suppliers.id == this_expense.source_id,
                                            Supplier_balances.currency_id == this_expense.currency_id).update({
             Supplier_balances.balance: Supplier_balances.balance + this_expense.money
         })

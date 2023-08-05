@@ -29,7 +29,7 @@ def all_trade_mechanisms(search, page, limit, trade_id, db, thisuser):
 def create_trade_mechanism_m(form, db, thisuser):
     the_one(db, Trades, form.trade_id, thisuser), the_one(db, Mechanisms, form.mechanism_id, thisuser)
     if db.query(Trade_mechanisms).filter(Trade_mechanisms.trade_id == form.trade_id).first():
-        raise HTTPException(status_code=400, detail="This trade already have his own trade_mechanism!")
+        raise HTTPException(status_code=400, detail="Bu mexanizmga standard mexanizm biriktirilgan!")
     if db.query(Warehouse_materials).filter(Warehouse_materials.mechanism_id == form.mechanism_id,
                                             Warehouse_materials.quantity >= form.quantity).first() is None:
         raise HTTPException(status_code=400, detail="Omborda bunday mexanizm yetarli emas!")

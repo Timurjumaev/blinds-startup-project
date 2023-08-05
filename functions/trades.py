@@ -74,12 +74,6 @@ async def create_trade_e(form, db, thisuser):
         branch_id=thisuser.branch_id
     )
     save_in_db(db, new_trade_db)
-    db.query(Warehouse_materials).filter(Warehouse_materials.branch_id == thisuser.branch_id,
-                                         Warehouse_materials.material_id == form.material_id).update({
-        Warehouse_materials.width: Warehouse_materials.width - form.width,
-        Warehouse_materials.height: Warehouse_materials.height - form.height
-    })
-    db.commit()
     stage = db.query(Stages).filter(Stages.id == stage.id).first()
     stage_users = db.query(Stage_users).filter(Stage_users.stage_id == stage.id,
                                                Stage_users.branch_id == thisuser.branch_id).all()
@@ -125,11 +119,11 @@ async def update_trade_e(form, db, thisuser):
     if db.query(Trades).filter(Trades.id == form.id).first().status == "true" and form.status != "false" and form.status != "true" and form.status != "done":
         raise HTTPException(status_code=400,
                             detail="Updated_status is only false, true or done!")
-    db.query(Warehouse_materials).filter(Warehouse_materials.material_id == material.id).update({
-        Warehouse_materials.width: Warehouse_materials.width + old_trade.width,
-        Warehouse_materials.height: Warehouse_materials.height + old_trade.height
-    })
-    db.commit()
+    # db.query(Warehouse_materials).filter(Warehouse_materials.material_id == material.id).update({
+    #     Warehouse_materials.width: Warehouse_materials.width + old_trade.width,
+    #     Warehouse_materials.height: Warehouse_materials.height + old_trade.height
+    # })
+    # db.commit()
     store = db.query(Warehouse_materials).filter(Warehouse_materials.material_id == material.id).first()
     if store.width < form.width or store.height < form.height:
         raise HTTPException(status_code=400, detail="Siz tanlagan material yetarli emas!")
@@ -151,12 +145,12 @@ async def update_trade_e(form, db, thisuser):
         Trades.order_id: form.order_id
     })
     db.commit()
-    db.query(Warehouse_materials).filter(Warehouse_materials.branch_id == thisuser.branch_id,
-                                         Warehouse_materials.material_id == form.material_id).update({
-        Warehouse_materials.width: Warehouse_materials.width - form.width,
-        Warehouse_materials.height: Warehouse_materials.height - form.height
-    })
-    db.commit()
+    # db.query(Warehouse_materials).filter(Warehouse_materials.branch_id == thisuser.branch_id,
+    #                                      Warehouse_materials.material_id == form.material_id).update({
+    #     Warehouse_materials.width: Warehouse_materials.width - form.width,
+    #     Warehouse_materials.height: Warehouse_materials.height - form.height
+    # })
+    # db.commit()
     stage = db.query(Stages).filter(Stages.id == form.stage_id).first()
     stage_users = db.query(Stage_users).filter(Stage_users.stage_id == form.stage_id,
                                                Stage_users.branch_id == thisuser.branch_id).all()

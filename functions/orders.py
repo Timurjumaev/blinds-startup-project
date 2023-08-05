@@ -76,10 +76,10 @@ def one_order_r(order_id, db, thisuser):
             Incomes.source == "order",
             Incomes.source_id == order_id
         ).scalar()
-    return (this_order,
-            {"money": total_money},
-            {"incomes": total_sum},
-            {"discount": discount_sum})
+    return {"order": this_order,
+            "money": total_money,
+            "incomes": total_sum,
+            "discount": discount_sum}
 
 
 def create_order_r(form, db, thisuser):
@@ -153,9 +153,9 @@ async def update_order_r(form, db, thisuser):
             if kassa.currency_id != currency.id:
                 raise HTTPException(status_code=400, detail="Tanlangan kassaning valyutasi so'm emas!")
             a = one_order_r(form.id, db, thisuser)
-            if form.summa > a.money - a.income:
+            if form.summa > a["money"] - a["incomes"]:
                 raise HTTPException(status_code=400, detail="Kiritilayotgan pul qoldiq summadan katta!")
-            elif form.summa == a.money - a.income:
+            elif form.summa == a["money"] - a["incomes"]:
                 income_db = Incomes(
                     money=form.summa,
                     currency_id=currency.id,
@@ -173,7 +173,7 @@ async def update_order_r(form, db, thisuser):
                     Kassas.balance: Kassas.balance + form.summa
                 })
                 db.commit()
-            elif 0 < form.summa < a.money - a.income:
+            elif 0 < form.summa < a["money"] - a["incomes"]:
                 income_db = Incomes(
                     money=form.summa,
                     currency_id=currency.id,
@@ -188,9 +188,9 @@ async def update_order_r(form, db, thisuser):
                 )
                 save_in_db(db, income_db)
                 loan = Loans(
-                    money=a.money - a.income - form.summa,
+                    money=a["money"] - a["incomes"] - form.summa,
                     currency_id=currency.id,
-                    residual=a.money - a.income - form.summa,
+                    residual=a["money"] - a["incomes"] - form.summa,
                     order_id=form.id,
                     return_date=form.return_date,
                     comment=form.comment,
@@ -204,9 +204,9 @@ async def update_order_r(form, db, thisuser):
                 db.commit()
             else:
                 loan = Loans(
-                    money=a.money - a.income,
+                    money=a["money"] - a["incomes"],
                     currency_id=currency.id,
-                    residual=a.money - a.income,
+                    residual=a["money"] - a["incomes"],
                     order_id=form.id,
                     return_date=form.return_date,
                     comment=form.comment,

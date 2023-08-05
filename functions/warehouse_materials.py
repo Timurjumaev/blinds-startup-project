@@ -1,5 +1,4 @@
 from sqlalchemy.orm import joinedload
-from fastapi import HTTPException
 from models.cells import Cells
 from models.collactions import Collactions
 from models.currencies import Currencies
@@ -42,9 +41,13 @@ def update_warehouse_materials_s(form, db, user):
         Warehouse_materials.cell_id: form.cell_id,
     })
     db.commit()
-    if db.query(Warehouse_materials).filter(Warehouse_materials.cell_id == old_cell.id).firts() is None:
+    if db.query(Warehouse_materials).filter(Warehouse_materials.cell_id == old_cell.id).first() is None:
         db.query(Cells).filter(Cells.id == old_cell.id).update({
             Cells.busy: False,
         })
         db.commit()
+    db.query(Cells).filter(Cells.id == form.cell_id).update({
+        Cells.busy: True
+    })
+    db.commit()
 
